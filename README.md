@@ -1,2 +1,0 @@
-# HomeworkAssignment344
-Grafiks
