@@ -93,14 +93,12 @@ int main()
     drone.px = 0.0f;
     drone.py = 3.5f;
     drone.pz = 6.0f;
-    drone.yaw = 3.14159f; // start facing the course
+    drone.yaw = 0.0f; // start facing the course
 
     // Lighting 
     Lighting lighting;
 
-    // Orthographic projection (static - aspect doesn't change)
-    // Perspective is rebuilt each frame so zoom (fovY) takes effect.
-
+    // Orthographic projection (static – rebuilt per frame for perspective so zoom works)
     // Orthographic (activated by 'P')
     float orthoH = 10.0f;
     float orthoW = orthoH * ((float)app.windowWidth / app.windowHeight);
@@ -131,7 +129,7 @@ int main()
             }
         }
 
-        // Matrices
+        // Matrices – rebuild perspective each frame so zoom (fovY) takes effect
         Matrix<4, 4> perspMatrix = makePerspective(
             drone.fovY,
             (float)app.windowWidth / app.windowHeight,

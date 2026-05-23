@@ -5,33 +5,46 @@ out vec4 colour;
 
 uniform sampler2D screenTexture;
 
-// Post-process mode flags 
-uniform bool nightVision; // green boost + brightness
-uniform bool fisheye; // barrel distortion
+uniform bool nightVision;
+uniform bool fisheye;
 uniform bool greyscale;
 uniform bool inverted;
-uniform bool monochrome; // map luminance to a single hue
+uniform bool monochrome;
 
-uniform vec3 monoHue; // target hue for monochrome mode (linear colour)
+uniform vec3 monoHue;
 
-// Fisheye barrel distortion
-// Returns the warped UV, or vec2(-1.0) as a sentinel for "out of lens" pixels.
-vec2 fisheyeUV(vec2 uv)
+vec2 fisheyeUV(vec2 uv, out bool outOfBounds)
 {
-    // Map [0,1] -> [-1,1] (centred)
+    // Map [0,1] -> [-1,1] centred
     vec2 p = uv * 2.0 - 1.0;
     float r = length(p);
 
-    // Pixels beyond the unit circle are outside the fisheye lens 
+    // Outside the lens circle -> black
     if (r > 1.0)
-        return vec2(-1.0);
+    {
+        outOfBounds = true;
+        return vec2(0.0);
+    }
 
-    // Equisolid / stereographic-style warp: pull centre outward
-    float theta = asin(r); // maps r=1 -> 90°
-    float strength = 1.4;
-    vec2 distorted = (theta / (r + 0.0001)) * p * strength;
+    outOfBounds = false;
 
-    return distorted * 0.5 + 0.5;
+    // Barrel warp using asin so the full circle maps smoothly to the frame.
+    // Avoid divide-by-zero at centre.
+    float warp = (r < 0.0001) ? 1.0 : asin(r) / r;
+    vec2 distorted = p * warp * 0.9;   // 0.9 keeps edges from hitting the frame border
+
+    // Map back to [0,1]
+    vec2 result = distorted * 0.5 + 0.5;
+
+    // If the warp pushed us outside the actual texture area, show black
+    // instead of clamping (which smears the edge pixels into bands).
+    if (result.x < 0.0 || result.x > 1.0 || result.y < 0.0 || result.y > 1.0)
+    {
+        outOfBounds = true;
+        return vec2(0.0);
+    }
+
+    return result;
 }
 
 void main()
@@ -40,10 +53,10 @@ void main()
 
     if (fisheye && !nightVision)
     {
-        vec2 warped = fisheyeUV(uv);
-        if (warped.x < 0.0)
+        bool outOfBounds;
+        vec2 warped = fisheyeUV(uv, outOfBounds);
+        if (outOfBounds)
         {
-            // Outside the fisheye circle - render as black vignette
             colour = vec4(0.0, 0.0, 0.0, 1.0);
             return;
         }
@@ -54,9 +67,8 @@ void main()
 
     if (nightVision)
     {
-        // Boost brightness, apply green tint
         float lum = dot(col, vec3(0.299, 0.587, 0.114));
-        lum = pow(lum * 2.5, 0.85); // boost + slight gamma
+        lum = pow(lum * 2.5, 0.85);
         col = vec3(lum * 0.15, lum, lum * 0.15);
     }
     else if (greyscale)
