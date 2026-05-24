@@ -12,6 +12,7 @@
 #include "PostProcess.h"
 #include "Lighting.h"
 #include "Scene.h"
+#include "Skybox.h"
 
 using namespace std;
 
@@ -63,6 +64,7 @@ int main()
     // ── Shaders ───────────────────────────────────────────────────────────────
     app.sceneShaderID    = LoadShaders("vertexShader.glsl",    "fragmentShader.glsl");
     app.ppShaderID       = LoadShaders("postProcessVert.glsl", "postProcessFrag.glsl");
+    GLuint skyboxShader  = LoadShaders("skyboxVert.glsl", "skyboxFrag.glsl");
     GLuint sunDepthShader  = LoadShaders("shadowDepthVert.glsl", "shadowDepthFrag.glsl");
     GLuint spotDepthShader = LoadShaders("spotDepthVert.glsl",   "spotDepthFrag.glsl");
     GLuint cubeDepthShader = LoadShaders("pointCubeDepthVert.glsl",
@@ -133,6 +135,10 @@ int main()
     // ── Rest of setup ─────────────────────────────────────────────────────────
     PostProcess pp;
     pp.init(app.windowWidth, app.windowHeight);
+    // Skybox (header-only) — init after GL context and post-process setup
+    Skybox skybox;
+    skybox.init();
+
     initScene();
 
     Drone drone;
@@ -271,6 +277,11 @@ int main()
 
         pp.bindFBO();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Draw skybox first (behind everything). skybox.draw will set its own
+        // shader as active, so restore the scene shader afterwards.
+        skybox.draw(skyboxShader, view, proj);
+
         glUseProgram(app.sceneShaderID);
 
         glUniform3f(glGetUniformLocation(app.sceneShaderID, "viewPos"), dx, dy, dz);
@@ -337,6 +348,9 @@ int main()
     glDeleteTextures(1, &spotArrayTex);
     glDeleteFramebuffers(MAX_POINT_CUBE_SHADOWS_MAIN, cubeFBO);
     glDeleteTextures(MAX_POINT_CUBE_SHADOWS_MAIN, cubeShadowTex);
+    // Skybox cleanup
+    skybox.cleanup();
+    glDeleteProgram(skyboxShader);
     glDeleteProgram(sunDepthShader);
     glDeleteProgram(spotDepthShader);
     glDeleteProgram(cubeDepthShader);
