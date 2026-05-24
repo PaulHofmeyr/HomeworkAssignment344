@@ -31,7 +31,24 @@ SRCS     = main.cpp \
            RocksNode.cpp \
            BridgeNode.cpp \
            HutNode.cpp \
-           HoleNode.cpp \
+           Hole01Node.cpp \
+           Hole02Node.cpp \
+           Hole03Node.cpp \
+           Hole04Node.cpp \
+           Hole05Node.cpp \
+           Hole06Node.cpp \
+           Hole07Node.cpp \
+           Hole08Node.cpp \
+           Hole09Node.cpp \
+           Hole10Node.cpp \
+           Hole11Node.cpp \
+           Hole12Node.cpp \
+           Hole13Node.cpp \
+           Hole14Node.cpp \
+           Hole15Node.cpp \
+           Hole16Node.cpp \
+           Hole17Node.cpp \
+           Hole18Node.cpp \
            WindmillNode.cpp \
            TreeNode.cpp \
            SceneRoot.cpp
