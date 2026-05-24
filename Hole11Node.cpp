@@ -3,10 +3,16 @@
 #include "Prototype.h"
 #include "CourseObjects.h"
 
-std::shared_ptr<SceneNode> buildHole11Node()
+std::shared_ptr<SceneNode> buildHole11Node(CourseLayout& layout)
 {
     auto node = std::make_shared<SceneNode>();
+    constexpr int  IDX = 10;
     constexpr float fx = -2.759f, fz = 11.023f;
+
+    node->addChild(fnNode([&layout](){ layout.drawGreenbed(IDX); }));
+    node->addChild(fnNode([&layout](){ layout.drawGreen   (IDX); }));
+    node->addChild(fnNode([&layout](){ layout.drawFlag    (IDX); }));
+
     node->addChild(makeFlagpole(fx, fz));
     node->addChild(makeHoleCup(fx, fz));
     node->addChild(makeBoulderCluster(fx + 1.0f, fz, 0.6f, 3));

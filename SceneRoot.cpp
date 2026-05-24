@@ -8,7 +8,7 @@
 #include "RocksNode.h"
 #include "BridgeNode.h"
 #include "HutNode.h"
-#include "HoleNode.h"
+#include "HoleNodes.h"
 #include "WindmillNode.h"
 #include "TreeNode.h"
 #include "CourseObjects.h"
@@ -41,9 +41,25 @@ void buildSceneRoot()
     g_root->addChild( buildBridgeNode(*g_layout) );
     g_root->addChild( buildHutNode   (*g_layout) );
 
-    // 5. All 18 holes (each hole is its own node with obstacles)
-    for(int i = 0; i < 18; ++i)
-        g_root->addChild( buildHoleNode(*g_layout, i) );
+    // 5. All 18 holes — each node owns its flat layers + 3-D objects
+    g_root->addChild( buildHole01Node(*g_layout) );
+    g_root->addChild( buildHole02Node(*g_layout) );
+    g_root->addChild( buildHole03Node(*g_layout) );
+    g_root->addChild( buildHole04Node(*g_layout) );
+    g_root->addChild( buildHole05Node(*g_layout) );
+    g_root->addChild( buildHole06Node(*g_layout) );
+    g_root->addChild( buildHole07Node(*g_layout) );
+    g_root->addChild( buildHole08Node(*g_layout) );
+    g_root->addChild( buildHole09Node(*g_layout) );
+    g_root->addChild( buildHole10Node(*g_layout) );
+    g_root->addChild( buildHole11Node(*g_layout) );
+    g_root->addChild( buildHole12Node(*g_layout) );
+    g_root->addChild( buildHole13Node(*g_layout) );
+    g_root->addChild( buildHole14Node(*g_layout) );
+    g_root->addChild( buildHole15Node(*g_layout) );
+    g_root->addChild( buildHole16Node(*g_layout) );
+    g_root->addChild( buildHole17Node(*g_layout) );
+    g_root->addChild( buildHole18Node(*g_layout) );
 
     // 6. Windmill at hole 18
     auto [wmNode, rotorPtr] = buildWindmillNode();
