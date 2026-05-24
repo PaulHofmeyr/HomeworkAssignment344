@@ -8,8 +8,6 @@ LDFLAGS  = -L$(BREW_PREFIX)/lib
 
 LIBS     = -lGL -lGLEW -lglfw -lm
 
-# Note: Vector.cpp and Matrix.cpp are excluded — they are #included by their headers.
-# shader.cpp is the original file from the project (unchanged).
 SRCS     = main.cpp \
            shader.cpp \
            Shape.cpp \
@@ -19,7 +17,20 @@ SRCS     = main.cpp \
            Cone.cpp \
            TriangularPrism.cpp \
            Bollard.cpp \
-           Scene.cpp
+           Scene.cpp \
+           CourseLayout.cpp \
+           Prototype.cpp \
+           CourseObjects.cpp \
+           FloorNode.cpp \
+           RoadNode.cpp \
+           WaterNode.cpp \
+           RocksNode.cpp \
+           BridgeNode.cpp \
+           HutNode.cpp \
+           HoleNode.cpp \
+           WindmillNode.cpp \
+           TreeNode.cpp \
+           SceneRoot.cpp
 
 OBJS     = $(SRCS:.cpp=.o)
 TARGET   = minigolf

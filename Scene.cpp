@@ -27,6 +27,9 @@
 #define COL_TRUNK_PRISM 0.30f, 0.18f, 0.08f
 #define COL_TOP_PRISM 0.12f, 0.38f, 0.12f
 
+// ---- Course layout (18 holes, ponds, bridges, hut) ----------
+static CourseLayout *g_layout = nullptr;
+
 // Shape pointers
 
 // Course
@@ -81,6 +84,10 @@ static Matrix<4,4> bollardTransforms[NUM_BOLLARD_INSTANCES];
 
 void initScene()
 {
+    // ---- Course layout: 18 greens, water ponds, bridges, hut ---
+    g_layout = new CourseLayout();
+    g_layout->build();
+
     // Course
     grassFloor = new Cuboid(0.0f, -0.05f, 0.0f, 1.8f, 0.05f, 2.8f, COL_GRASS);
 
@@ -214,6 +221,9 @@ void initScene()
 
 void drawScene(bool wireframe)
 {
+    // Course layout always drawn filled (flat polygons have no wireframe mode)
+    g_layout->draw();
+
     if (wireframe)
     {
         grassFloor->drawWireframe();
@@ -318,6 +328,14 @@ void drawRotor(bool wireframe)
 
 void cleanupScene()
 {
+    // Course layout
+    if (g_layout)
+    {
+        g_layout->cleanup();
+        delete g_layout;
+        g_layout = nullptr;
+    }
+
     delete grassFloor;
     delete wallNorth;
     delete wallSouth;
@@ -353,6 +371,7 @@ void cleanupScene()
     delete blade2;
     delete blade3;
 }
+
 // Rotor spinning transform
 static Matrix<4, 4> g_rotorTransform = getIdentity4();
 

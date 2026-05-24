@@ -1,0 +1,7 @@
+# Compiled objects and binary
+*.o
+minigolf
+
+# Windows Zone Identifier metadata (from downloads)
+*:Zone.Identifier
+*:sec.endpointdlp
