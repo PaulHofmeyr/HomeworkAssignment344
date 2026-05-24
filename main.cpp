@@ -10,7 +10,8 @@
 #include "Drone.h"
 #include "PostProcess.h"
 #include "Lighting.h"
-#include "SceneRoot.h"   // scene graph (replaces Scene.h)
+#include "SceneRoot.h"
+#include "Skybox.h"
 
 using namespace std;
 
@@ -60,11 +61,15 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.53f, 0.81f, 0.98f, 1.0f);
 
-    // ── Shaders ───────────────────────────────────────────────
-    app.sceneShaderID  = LoadShaders("vertexShader.glsl",    "fragmentShader.glsl");
-    app.ppShaderID     = LoadShaders("postProcessVert.glsl", "postProcessFrag.glsl");
+    // ── Shaders ───────────────────────────────────────────────────────────────
+    app.sceneShaderID    = LoadShaders("vertexShader.glsl",    "fragmentShader.glsl");
+    app.ppShaderID       = LoadShaders("postProcessVert.glsl", "postProcessFrag.glsl");
+    GLuint skyboxShader  = LoadShaders("skyboxVert.glsl", "skyboxFrag.glsl");
     GLuint sunDepthShader  = LoadShaders("shadowDepthVert.glsl", "shadowDepthFrag.glsl");
     GLuint spotDepthShader = LoadShaders("spotDepthVert.glsl",   "spotDepthFrag.glsl");
+    GLuint cubeDepthShader = LoadShaders("pointCubeDepthVert.glsl",
+                                         "pointCubeDepthGeom.glsl",
+                                         "pointCubeDepthFrag.glsl");
 
     // ── Sun shadow map FBO ────────────────────────────────────
     GLuint sunFBO, sunDepthTex;
@@ -98,9 +103,34 @@ int main()
     glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
     glGenFramebuffers(1, &spotFBO);
 
-    // ── Post-process FBO ──────────────────────────────────────
+    // ── Point-light cube shadow maps ──────────────────────────────────────────
+    static constexpr int MAX_POINT_CUBE_SHADOWS_MAIN = 4;
+    GLuint cubeShadowTex[MAX_POINT_CUBE_SHADOWS_MAIN];
+    GLuint cubeFBO[MAX_POINT_CUBE_SHADOWS_MAIN];
+    glGenTextures(MAX_POINT_CUBE_SHADOWS_MAIN, cubeShadowTex);
+    glGenFramebuffers(MAX_POINT_CUBE_SHADOWS_MAIN, cubeFBO);
+    for (int ci = 0; ci < MAX_POINT_CUBE_SHADOWS_MAIN; ci++) {
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubeShadowTex[ci]);
+        for (int f = 0; f < 6; f++)
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, 0,
+                         GL_DEPTH_COMPONENT32F, SHADOW_W, SHADOW_W,
+                         0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO[ci]);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeShadowTex[ci], 0);
+        glDrawBuffer(GL_NONE); glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    // ── Post-process FBO + Skybox ─────────────────────────────────────────────
     PostProcess pp;
     pp.init(app.windowWidth, app.windowHeight);
+    Skybox skybox;
+    skybox.init();
 
     // ── Build full scene graph ────────────────────────────────
     buildSceneRoot();
@@ -194,6 +224,29 @@ int main()
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+        // ── 3b. Point-light cube shadow passes (6 faces × N lights) ───────────
+        glViewport(0, 0, SHADOW_W, SHADOW_W);
+        glUseProgram(cubeDepthShader);
+        for (int ci = 0; ci < lighting.numPointCubeShadows; ci++) {
+            glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO[ci]);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            for (int f = 0; f < 6; f++) {
+                std::string uname = "shadowMatrices[" + std::to_string(f) + "]";
+                setMat4(cubeDepthShader, uname.c_str(), lighting.pointCubeLSMs[ci].m[f]);
+            }
+            float lx = lighting.bollardPos[ci].x;
+            float ly = lighting.bollardPos[ci].y;
+            float lz = lighting.bollardPos[ci].z;
+            glUniform3f(glGetUniformLocation(cubeDepthShader, "lightPos"), lx, ly, lz);
+            glUniform1f(glGetUniformLocation(cubeDepthShader, "farPlane"), lighting.pointShadowFarPlane);
+
+            { float id[16]; flattenMatrix4(getIdentity4(), id);
+              glUniformMatrix4fv(glGetUniformLocation(cubeDepthShader, "modelMatrix"), 1, GL_FALSE, id); }
+            drawSceneRoot(cubeDepthShader, false);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         // ── 3. Scene pass → post-process FBO ─────────────────
         glViewport(0, 0, app.windowWidth, app.windowHeight);
 
@@ -204,6 +257,11 @@ int main()
 
         pp.bindFBO();
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Draw skybox first (behind everything). skybox.draw will set its own
+        // shader as active, so restore the scene shader afterwards.
+        skybox.draw(skyboxShader, view, proj);
+
         glUseProgram(app.sceneShaderID);
 
         glUniform3f(glGetUniformLocation(app.sceneShaderID, "viewPos"), dx, dy, dz);
@@ -226,6 +284,21 @@ int main()
         glUniform1i(glGetUniformLocation(app.sceneShaderID, "useSpotShadows"), 1);
         glUniform1i(glGetUniformLocation(app.sceneShaderID, "numSpotShadows"),
                     lighting.numSpotShadows);
+
+        // Cube shadow maps → texture units 3-6
+        for (int ci = 0; ci < MAX_POINT_CUBE_SHADOWS_MAIN; ci++) {
+            glActiveTexture(GL_TEXTURE3 + ci);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubeShadowTex[ci]);
+            std::string uname = "pointShadowCubeMap[" + std::to_string(ci) + "]";
+            glUniform1i(glGetUniformLocation(app.sceneShaderID, uname.c_str()), 3 + ci);
+        }
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "usePointCubeShadows"), 1);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "numPointCubeShadows"),
+                    lighting.numPointCubeShadows);
+        glUniform1f(glGetUniformLocation(app.sceneShaderID, "pointShadowFarPlane"),
+                    lighting.pointShadowFarPlane);
+
+
         for (int i = 0; i < lighting.numSpotShadows; i++) {
             std::string uname = "spotLightSpaceMatrix[" + std::to_string(i) + "]";
             setMat4(app.sceneShaderID, uname.c_str(), lighting.spotLSMs[i]);
@@ -248,8 +321,14 @@ int main()
     glDeleteTextures(1, &sunDepthTex);
     glDeleteFramebuffers(1, &spotFBO);
     glDeleteTextures(1, &spotArrayTex);
+    glDeleteFramebuffers(MAX_POINT_CUBE_SHADOWS_MAIN, cubeFBO);
+    glDeleteTextures(MAX_POINT_CUBE_SHADOWS_MAIN, cubeShadowTex);
+    // Skybox cleanup
+    skybox.cleanup();
+    glDeleteProgram(skyboxShader);
     glDeleteProgram(sunDepthShader);
     glDeleteProgram(spotDepthShader);
+    glDeleteProgram(cubeDepthShader);
     cleanupSceneRoot();
     glDeleteProgram(app.sceneShaderID);
     glDeleteProgram(app.ppShaderID);

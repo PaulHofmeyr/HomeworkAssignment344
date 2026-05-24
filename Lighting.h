@@ -8,6 +8,10 @@
 #include "AppState.h"
 #include "Transformations.h"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 // ─────────────────────────────────────────────────────────────────────────────
 // HOW TO ADD A NEW SPOTLIGHT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -57,8 +61,13 @@ static inline void setUniform1i(GLuint p, const std::string& n, int v)
 { glUniform1i(glGetUniformLocation(p, n.c_str()), v); }
 
 // MAX_SPOT_SHADOWS: must match the #define in fragmentShader.glsl
-static constexpr int MAX_SPOT_SHADOWS = 16;
+static constexpr int MAX_SPOT_SHADOWS  = 16;
 static constexpr int MAX_SPOTLIGHTS    = 32;
+
+// Cube shadow maps — one cubemap per point light.
+// MAX_POINT_CUBE_SHADOWS must match fragmentShader.glsl.
+static constexpr int MAX_POINT_LIGHTS      = 8;
+static constexpr int MAX_POINT_CUBE_SHADOWS = 4;   // how many point lights cast shadows
 
 class Lighting
 {
@@ -66,7 +75,7 @@ public:
     // ── Point light positions ─────────────────────────────────────────────────
     static constexpr int NUM_BOLLARDS = 2;
     Vec3 bollardPos[NUM_BOLLARDS] = {
-        { -3.0f, 0.4f,  0.0f },
+        { -1.4f, 0.55f, 2.0f },  // placed bollard position
         {  3.0f, 0.4f,  0.0f },
     };
     Vec3 gazePos = { 0.0f, 2.8f, 0.0f };
@@ -79,6 +88,17 @@ public:
     Matrix<4,4> spotLSMs[MAX_SPOT_SHADOWS];
     int         spotShadowLayer[MAX_SPOTLIGHTS];
     int         numSpotShadows = 0;
+
+    // ── Cube shadow maps for point lights ─────────────────────────────────────
+    // For each shadow-casting point light we store 6 view-projection matrices
+    // (one per cube face). main.cpp renders the scene 6× per light into the
+    // matching layer of a cubemap depth texture.
+    struct CubeFaces { Matrix<4,4> m[6]; };
+    CubeFaces pointCubeLSMs[MAX_POINT_CUBE_SHADOWS];
+    // Maps point-light index → which cubemap slot (-1 = no shadow)
+    int       pointCubeShadowSlot[MAX_POINT_LIGHTS];
+    int       numPointCubeShadows = 0;
+    float     pointShadowFarPlane = 20.0f;  // must match fragment shader
 
     // ─────────────────────────────────────────────────────────────────────────
     Lighting()
@@ -161,18 +181,28 @@ public:
         }
 
         // ── Point lights ──────────────────────────────────────────────────────
+        numPointCubeShadows = 0;
+        for (int i = 0; i < MAX_POINT_LIGHTS; i++) pointCubeShadowSlot[i] = -1;
+
         int ptIdx = 0;
         for (int i = 0; i < NUM_BOLLARDS; i++, ptIdx++) {
             std::string b = "pointLights[" + std::to_string(ptIdx) + "]";
             glUniform3f(glGetUniformLocation(prog, (b+".position").c_str()),
                         bollardPos[i].x, bollardPos[i].y, bollardPos[i].z);
             glUniform3f(glGetUniformLocation(prog, (b+".ambient").c_str()),  0.02f, 0.015f, 0.01f);
-            glUniform3f(glGetUniformLocation(prog, (b+".diffuse").c_str()),  0.60f, 0.50f,  0.35f);
-            glUniform3f(glGetUniformLocation(prog, (b+".specular").c_str()), 0.20f, 0.15f,  0.10f);
+            glUniform3f(glGetUniformLocation(prog, (b+".diffuse").c_str()),  3.0f, 2.5f,  1.8f);
+            glUniform3f(glGetUniformLocation(prog, (b+".specular").c_str()), 1.5f, 1.2f,  0.8f);
             glUniform1f(glGetUniformLocation(prog, (b+".constant").c_str()),  1.0f);
-            glUniform1f(glGetUniformLocation(prog, (b+".linear").c_str()),    0.35f);
-            glUniform1f(glGetUniformLocation(prog, (b+".quadratic").c_str()), 0.44f);
+            glUniform1f(glGetUniformLocation(prog, (b+".linear").c_str()),    0.70f);
+            glUniform1f(glGetUniformLocation(prog, (b+".quadratic").c_str()), 1.80f);
             setUniformBool(prog, b+".enabled", fixturesOn);
+
+            // Cube shadow: assign a slot and build 6 face matrices
+            if (numPointCubeShadows < MAX_POINT_CUBE_SHADOWS) {
+                int slot = numPointCubeShadows++;
+                pointCubeShadowSlot[ptIdx] = slot;
+                _buildCubeFaces(bollardPos[i], pointShadowFarPlane, pointCubeLSMs[slot]);
+            }
         }
         {
             std::string b = "pointLights[" + std::to_string(ptIdx) + "]";
@@ -188,6 +218,14 @@ public:
             ptIdx++;
         }
         setUniform1i(prog, "numPointLights", ptIdx);
+
+        // Upload cube-shadow uniforms
+        setUniform1i(prog, "numPointCubeShadows", numPointCubeShadows);
+        setUniform1f(prog, "pointShadowFarPlane", pointShadowFarPlane);
+        for (int i = 0; i < ptIdx; i++) {
+            std::string u = "pointCubeShadowSlot[" + std::to_string(i) + "]";
+            setUniform1i(prog, u, pointCubeShadowSlot[i]);
+        }
 
         // ── Spotlights (all entries in spotDefs, then drone last) ─────────────
         numSpotShadows = 0;
@@ -291,6 +329,35 @@ private:
         // FOV = 2 × outer cut-off + small margin so the full cone is covered
         Matrix<4,4> lProj = makePerspective(outerRad * 2.0f + 0.1f, 1.0f, 0.1f, 50.0f);
         return lProj * lView;
+    }
+
+    // Build 6 view-projection matrices for a point-light cubemap pass.
+    // Each face uses a 90° FOV perspective and looks along one axis.
+    void _buildCubeFaces(Vec3 pos, float farPlane, CubeFaces& out)
+    {
+        Matrix<4,4> proj = makePerspective(
+            (float)M_PI * 0.5f,   // 90°
+            1.0f, 0.05f, farPlane);
+
+        // +X, -X, +Y, -Y, +Z, -Z  (OpenGL cubemap face order)
+        struct FaceDef { float tx,ty,tz, ux,uy,uz; };
+        static const FaceDef faces[6] = {
+            { 1, 0, 0,  0,-1, 0},   // +X
+            {-1, 0, 0,  0,-1, 0},   // -X
+            { 0, 1, 0,  0, 0, 1},   // +Y
+            { 0,-1, 0,  0, 0,-1},   // -Y
+            { 0, 0, 1,  0,-1, 0},   // +Z
+            { 0, 0,-1,  0,-1, 0},   // -Z
+        };
+        for (int f = 0; f < 6; f++) {
+            Matrix<4,4> view = makeLookAt(
+                pos.x, pos.y, pos.z,
+                pos.x + faces[f].tx,
+                pos.y + faces[f].ty,
+                pos.z + faces[f].tz,
+                faces[f].ux, faces[f].uy, faces[f].uz);
+            out.m[f] = proj * view;
+        }
     }
 };
 

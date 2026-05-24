@@ -1,4 +1,6 @@
 #include "Scene.h"
+#include "Bollard.h"
+#include "AppState.h"
 
 // Colours
 #define COL_GRASS 0.25f, 0.62f, 0.25f    // green
@@ -6,6 +8,10 @@
 #define COL_STARTMAT 0.65f, 0.10f, 0.10f // red/maroon
 #define COL_HOLE 0.08f, 0.08f, 0.08f     // near black
 #define COL_RAMP 0.55f, 0.38f, 0.18f     // sandy ramp colour
+
+// Bollard: dark grey body with a slightly lighter domed cap
+#define COL_BOLLARD_BODY 0.18f, 0.18f, 0.20f
+#define COL_BOLLARD_CAP  0.28f, 0.28f, 0.30f
 
 #define COL_STONE 0.78f, 0.70f, 0.55f    // sandstone
 #define COL_DARK_CAP 0.22f, 0.22f, 0.22f // dark grey
@@ -66,6 +72,15 @@ static Cuboid *blade0 = nullptr;
 static Cuboid *blade1 = nullptr;
 static Cuboid *blade2 = nullptr;
 static Cuboid *blade3 = nullptr;
+
+// ── Bollards ──────────────────────────────────────────────────────────────────
+// One prototype built once; each placed instance shares its GPU buffers.
+// To add more bollards: push another Bollard* into bollardInstances and
+// add a Matrix<4,4> in bollardTransforms below.
+static Bollard *bollardProto = nullptr;   // prototype — owns GPU data
+static const int NUM_BOLLARD_INSTANCES = 1;
+static Bollard  *bollardInstances[NUM_BOLLARD_INSTANCES];
+static Matrix<4,4> bollardTransforms[NUM_BOLLARD_INSTANCES];
 
 void initScene()
 {
@@ -190,6 +205,18 @@ void initScene()
     blade1->build();
     blade2->build();
     blade3->build();
+
+    // ── Bollards ──────────────────────────────────────────────────────────────
+    // Build the prototype once at the origin; instances share its buffers.
+    bollardProto = new Bollard(0.0f, 0.0f, 0.0f, COL_BOLLARD_BODY);
+    bollardProto->build();
+
+    // Instance 0: placed beside the starting mat on the east side
+    bollardInstances[0] = new Bollard(0.0f, 0.0f, 0.0f, COL_BOLLARD_BODY);
+    bollardInstances[0]->cloneBuffers(*bollardProto);
+    bollardTransforms[0] = makeTranslation3D(-1.4f, 0.0f, 2.0f);
+    // Add more instances here by increasing NUM_BOLLARD_INSTANCES above,
+    // creating a new Bollard*, calling cloneBuffers, and setting its transform.
 }
 
 void drawScene(bool wireframe)
@@ -258,6 +285,24 @@ void drawScene(bool wireframe)
         tower->drawFilled();
         darkCap->drawFilled();
         roof->drawFilled();
+    }
+
+    // ── Bollard instances (always drawn; modelMatrix uploaded per instance) ───
+    {
+        AppState &app = AppState::get();
+        GLuint prog = app.sceneShaderID;
+        for (int i = 0; i < NUM_BOLLARD_INSTANCES; i++) {
+            float flat[16];
+            flattenMatrix4(bollardTransforms[i], flat);
+            glUniformMatrix4fv(glGetUniformLocation(prog, "modelMatrix"), 1, GL_FALSE, flat);
+            if (wireframe)
+                bollardInstances[i]->drawWireframe();
+            else
+                bollardInstances[i]->drawFilled();
+        }
+        // Restore identity model matrix for subsequent callers
+        float id[16]; flattenMatrix4(getIdentity4(), id);
+        glUniformMatrix4fv(glGetUniformLocation(prog, "modelMatrix"), 1, GL_FALSE, id);
     }
 }
 
