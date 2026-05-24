@@ -78,6 +78,17 @@ uniform int            spotShadowLayer[MAX_SPOTLIGHTS];
 uniform int            numSpotShadows;          // how many layers are valid
 uniform bool           useSpotShadows;
 
+// ── Point-light cube shadow maps ──────────────────────────────────────────────
+// samplerCube array requires GLSL 4.00; on 3.30 we declare individual samplers.
+// Texture units 3..6 (one per possible shadow-casting point light).
+#define MAX_POINT_CUBE_SHADOWS 4
+#define MAX_POINT_LIGHTS 8
+uniform samplerCube pointShadowCubeMap[MAX_POINT_CUBE_SHADOWS];  // tex units 3-6
+uniform int         pointCubeShadowSlot[MAX_POINT_LIGHTS];
+uniform int         numPointCubeShadows;
+uniform float       pointShadowFarPlane;
+uniform bool        usePointCubeShadows;
+
 // ─────────────────────────────────────────────────────────────────────────────
 float calcSunShadow(vec4 fragPosLS, vec3 normal, vec3 lightDir)
 {
@@ -118,6 +129,30 @@ float calcSpotShadow(int shadowIndex, vec3 normal, vec3 lightDir)
     return (current - bias > closest) ? 0.0 : 1.0;
 }
 
+// Cube shadow for a point light.
+// cubeSlot: index into pointShadowCubeMap[] sampler array.
+// lightPos: world-space position of the point light.
+float calcPointCubeShadow(int cubeSlot, vec3 lightPos)
+{
+    if (!usePointCubeShadows || cubeSlot < 0 || cubeSlot >= numPointCubeShadows)
+        return 1.0;
+
+    // Direction from light to fragment — used to choose the correct cube face
+    vec3  fragToLight = fragPos - lightPos;
+    float currentDist = length(fragToLight) / pointShadowFarPlane;  // normalised
+
+    // Sample closest stored depth for this direction
+    // (GLSL requires a compile-time index into a sampler array; we use if/else)
+    float closestDist;
+    if      (cubeSlot == 0) closestDist = texture(pointShadowCubeMap[0], fragToLight).r;
+    else if (cubeSlot == 1) closestDist = texture(pointShadowCubeMap[1], fragToLight).r;
+    else if (cubeSlot == 2) closestDist = texture(pointShadowCubeMap[2], fragToLight).r;
+    else                    closestDist = texture(pointShadowCubeMap[3], fragToLight).r;
+
+    float bias = 0.05;
+    return (currentDist - bias > closestDist) ? 0.0 : 1.0;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 baseDiffuse)
 {
@@ -140,7 +175,7 @@ vec3 calcDirLight(DirLight light, vec3 normal, vec3 viewDir, vec3 baseDiffuse)
     return amb + (dif + spe) * shadow;
 }
 
-vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 baseDiffuse)
+vec3 calcPointLight(PointLight light, int pointIndex, vec3 normal, vec3 viewDir, vec3 baseDiffuse)
 {
     if (!light.enabled) return vec3(0.0);
 
@@ -156,7 +191,9 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 baseDiffus
     vec3 amb = light.ambient  * baseDiffuse;
     vec3 dif = light.diffuse  * diff * baseDiffuse;
     vec3 spe = light.specular * spec * material.specular;
-    return (amb + dif + spe) * atten;
+
+    float shadow = calcPointCubeShadow(pointCubeShadowSlot[pointIndex], light.position);
+    return (amb + (dif + spe) * shadow) * atten;
 }
 
 // spotIndex: position in spotLights[] — used to find the matching shadow layer
@@ -202,7 +239,7 @@ void main()
     result += calcDirLight(sun, norm, viewDir, baseDiff);
 
     for (int i = 0; i < numPointLights && i < MAX_POINT_LIGHTS; i++)
-        result += calcPointLight(pointLights[i], norm, viewDir, baseDiff);
+        result += calcPointLight(pointLights[i], i, norm, viewDir, baseDiff);
 
     for (int i = 0; i < numSpotLights && i < MAX_SPOTLIGHTS; i++)
         result += calcSpotLight(spotLights[i], i, norm, viewDir, baseDiff);

@@ -65,6 +65,9 @@ int main()
     app.ppShaderID       = LoadShaders("postProcessVert.glsl", "postProcessFrag.glsl");
     GLuint sunDepthShader  = LoadShaders("shadowDepthVert.glsl", "shadowDepthFrag.glsl");
     GLuint spotDepthShader = LoadShaders("spotDepthVert.glsl",   "spotDepthFrag.glsl");
+    GLuint cubeDepthShader = LoadShaders("pointCubeDepthVert.glsl",
+                                         "pointCubeDepthGeom.glsl",
+                                         "pointCubeDepthFrag.glsl");
 
     // ── Sun shadow map FBO (unchanged) ────────────────────────────────────────
     GLuint sunFBO, sunDepthTex;
@@ -101,6 +104,31 @@ int main()
 
     // Single FBO — we'll re-attach a different layer each depth pass
     glGenFramebuffers(1, &spotFBO);
+
+    // ── Point-light cube shadow maps ──────────────────────────────────────────
+    // One GL_TEXTURE_CUBE_MAP per shadow-casting point light.
+    // Texture units 3..3+MAX_POINT_CUBE_SHADOWS-1.
+    static constexpr int MAX_POINT_CUBE_SHADOWS_MAIN = 4;
+    GLuint cubeShadowTex[MAX_POINT_CUBE_SHADOWS_MAIN];
+    GLuint cubeFBO[MAX_POINT_CUBE_SHADOWS_MAIN];
+    glGenTextures(MAX_POINT_CUBE_SHADOWS_MAIN, cubeShadowTex);
+    glGenFramebuffers(MAX_POINT_CUBE_SHADOWS_MAIN, cubeFBO);
+    for (int ci = 0; ci < MAX_POINT_CUBE_SHADOWS_MAIN; ci++) {
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubeShadowTex[ci]);
+        for (int f = 0; f < 6; f++)
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, 0,
+                         GL_DEPTH_COMPONENT32F, SHADOW_W, SHADOW_W,
+                         0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO[ci]);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeShadowTex[ci], 0);
+        glDrawBuffer(GL_NONE); glReadBuffer(GL_NONE);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 
     // ── Rest of setup ─────────────────────────────────────────────────────────
     PostProcess pp;
@@ -204,7 +232,36 @@ int main()
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // ── 4. Scene pass → post-process FBO ──────────────────────────────────
+        // ── 3b. Point-light cube shadow passes (6 faces × N lights) ───────────
+        // The geometry shader fans each triangle to all 6 cube faces in one draw.
+        glViewport(0, 0, SHADOW_W, SHADOW_W);
+        glUseProgram(cubeDepthShader);
+        for (int ci = 0; ci < lighting.numPointCubeShadows; ci++) {
+            glBindFramebuffer(GL_FRAMEBUFFER, cubeFBO[ci]);
+            glClear(GL_DEPTH_BUFFER_BIT);
+
+            // Upload 6 face matrices
+            for (int f = 0; f < 6; f++) {
+                std::string uname = "shadowMatrices[" + std::to_string(f) + "]";
+                setMat4(cubeDepthShader, uname.c_str(), lighting.pointCubeLSMs[ci].m[f]);
+            }
+            // Find which point light owns this slot (iterate bollardPos array)
+            // We stored the light position in Lighting::bollardPos; query slot mapping
+            // by finding ptIdx whose pointCubeShadowSlot == ci.
+            // For simplicity, pass lightPos[ci] == bollardPos[ci] (slots assigned in order).
+            float lx = lighting.bollardPos[ci].x;
+            float ly = lighting.bollardPos[ci].y;
+            float lz = lighting.bollardPos[ci].z;
+            glUniform3f(glGetUniformLocation(cubeDepthShader, "lightPos"), lx, ly, lz);
+            glUniform1f(glGetUniformLocation(cubeDepthShader, "farPlane"), lighting.pointShadowFarPlane);
+
+            { float id[16]; flattenMatrix4(getIdentity4(),id);
+              glUniformMatrix4fv(glGetUniformLocation(cubeDepthShader,"modelMatrix"),1,GL_FALSE,id); }
+            drawScene(false);
+            glUniformMatrix4fv(glGetUniformLocation(cubeDepthShader,"modelMatrix"),1,GL_FALSE,rotorFlat);
+            drawRotor(false);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, app.windowWidth, app.windowHeight);
 
         Matrix<4,4> perspMatrix = makePerspective(
@@ -238,6 +295,19 @@ int main()
         glUniform1i(glGetUniformLocation(app.sceneShaderID, "numSpotShadows"),
                     lighting.numSpotShadows);
 
+        // Cube shadow maps → texture units 3-6
+        for (int ci = 0; ci < MAX_POINT_CUBE_SHADOWS_MAIN; ci++) {
+            glActiveTexture(GL_TEXTURE3 + ci);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubeShadowTex[ci]);
+            std::string uname = "pointShadowCubeMap[" + std::to_string(ci) + "]";
+            glUniform1i(glGetUniformLocation(app.sceneShaderID, uname.c_str()), 3 + ci);
+        }
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "usePointCubeShadows"), 1);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "numPointCubeShadows"),
+                    lighting.numPointCubeShadows);
+        glUniform1f(glGetUniformLocation(app.sceneShaderID, "pointShadowFarPlane"),
+                    lighting.pointShadowFarPlane);
+
         // Upload each spotlight's light-space matrix as a uniform array
         for (int i = 0; i < lighting.numSpotShadows; i++) {
             std::string uname = "spotLightSpaceMatrix[" + std::to_string(i) + "]";
@@ -265,8 +335,11 @@ int main()
     glDeleteTextures(1, &sunDepthTex);
     glDeleteFramebuffers(1, &spotFBO);
     glDeleteTextures(1, &spotArrayTex);
+    glDeleteFramebuffers(MAX_POINT_CUBE_SHADOWS_MAIN, cubeFBO);
+    glDeleteTextures(MAX_POINT_CUBE_SHADOWS_MAIN, cubeShadowTex);
     glDeleteProgram(sunDepthShader);
     glDeleteProgram(spotDepthShader);
+    glDeleteProgram(cubeDepthShader);
     cleanupScene();
     glDeleteProgram(app.sceneShaderID);
     glDeleteProgram(app.ppShaderID);

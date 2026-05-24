@@ -18,6 +18,7 @@ protected:
     int    wireVertexCount;
 
     float r, g, b;
+    bool  isClone = false;   // clones share GPU buffers — do not delete them
 
     GLuint uploadToGPU(const std::vector<float> &data, GLuint &vboOut);
     void   buildBuffers(const std::vector<float> &filledData,
@@ -45,6 +46,21 @@ public:
     virtual void build() = 0;
     void drawFilled()    const;
     void drawWireframe() const;
+
+    // ── Prototype pattern ──────────────────────────────────────────────────
+    // Copy GPU buffer handles from a built prototype so geometry does not need
+    // to be recomputed.  The clone shares the VAO/VBO (read-only rendering),
+    // so do NOT delete the prototype before all clones are done with it.
+    void cloneBuffers(const Shape &proto)
+    {
+        filledVAO         = proto.filledVAO;
+        filledVBO         = proto.filledVBO;
+        filledVertexCount = proto.filledVertexCount;
+        wireVAO           = proto.wireVAO;
+        wireVBO           = proto.wireVBO;
+        wireVertexCount   = proto.wireVertexCount;
+        isClone           = true;
+    }
 };
 
 #endif // SHAPE_H

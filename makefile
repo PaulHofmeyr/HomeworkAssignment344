@@ -18,6 +18,7 @@ SRCS     = main.cpp \
            Cuboid.cpp \
            Cone.cpp \
            TriangularPrism.cpp \
+           Bollard.cpp \
            Scene.cpp
 
 OBJS     = $(SRCS:.cpp=.o)
