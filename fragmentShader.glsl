@@ -67,11 +67,16 @@ uniform sampler2D sunShadowMap;
 uniform mat4      sunLightSpaceMatrix;
 uniform bool      useSunShadow;
 
-// ── Drone / spotlight shadow map ──────────────────────────────────────────────
-// Single 2D depth map for the drone spotlight (index numSpotLights-1).
-uniform sampler2D spotShadowMap;
-uniform mat4      spotLightSpaceMatrix;
-uniform bool      useSpotShadow;
+// ── Spotlight shadow maps ─────────────────────────────────────────────────────
+// One 2D texture per shadow-casting spotlight, packed into an array.
+// Index i in this array corresponds to spotlight i in spotLights[].
+// MAX_SPOT_SHADOWS must match the value in Lighting.h.
+#define MAX_SPOT_SHADOWS 16
+uniform sampler2DArray spotShadowMaps;          // texture unit 2
+uniform mat4           spotLightSpaceMatrix[MAX_SPOT_SHADOWS];
+uniform int            spotShadowLayer[MAX_SPOTLIGHTS];
+uniform int            numSpotShadows;          // how many layers are valid
+uniform bool           useSpotShadows;
 
 // ─────────────────────────────────────────────────────────────────────────────
 float calcSunShadow(vec4 fragPosLS, vec3 normal, vec3 lightDir)
@@ -86,21 +91,30 @@ float calcSunShadow(vec4 fragPosLS, vec3 normal, vec3 lightDir)
     return (current - bias > closest) ? 0.0 : 1.0;
 }
 
-float calcSpotShadow(vec3 normal, vec3 lightDir)
+// shadowIndex: which layer of the spotShadowMaps array to sample
+float calcSpotShadow(int shadowIndex, vec3 normal, vec3 lightDir)
 {
-    vec4 fragPosLS = spotLightSpaceMatrix * vec4(fragPos, 1.0);
+    if (shadowIndex < 0 || shadowIndex >= numSpotShadows)
+        return 1.0;
+
+    vec4 fragPosLS = spotLightSpaceMatrix[shadowIndex] * vec4(fragPos, 1.0);
+
+    // Perspective divide → NDC, then remap to [0,1]
     vec3 proj = fragPosLS.xyz / fragPosLS.w;
     proj = proj * 0.5 + 0.5;
 
-    // Outside the spotlight frustum → not shadowed
+    // Fragment is outside this spotlight's frustum — not shadowed
     if (proj.z > 1.0 || proj.x < 0.0 || proj.x > 1.0
                      || proj.y < 0.0 || proj.y > 1.0)
         return 1.0;
 
-    float closest = texture(spotShadowMap, proj.xy).r;
+    // Sample the correct layer of the depth array
+    float closest = texture(spotShadowMaps, vec3(proj.xy, float(shadowIndex))).r;
     float current = proj.z;
-    // Angle-dependent bias (steeper surfaces need more bias)
+
+    // Angle-dependent bias prevents shadow acne on slanted surfaces
     float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.001);
+
     return (current - bias > closest) ? 0.0 : 1.0;
 }
 
@@ -145,8 +159,8 @@ vec3 calcPointLight(PointLight light, vec3 normal, vec3 viewDir, vec3 baseDiffus
     return (amb + dif + spe) * atten;
 }
 
-// isDroneSpot: true only for the last spotlight (the drone), which has a shadow map.
-vec3 calcSpotLight(SpotLight light, bool isDroneSpot, vec3 normal, vec3 viewDir, vec3 baseDiffuse)
+// spotIndex: position in spotLights[] — used to find the matching shadow layer
+vec3 calcSpotLight(SpotLight light, int spotIndex, vec3 normal, vec3 viewDir, vec3 baseDiffuse)
 {
     if (!light.enabled) return vec3(0.0);
 
@@ -167,9 +181,11 @@ vec3 calcSpotLight(SpotLight light, bool isDroneSpot, vec3 normal, vec3 viewDir,
     vec3 dif = light.diffuse  * diff * baseDiffuse;
     vec3 spe = light.specular * spec * material.specular;
 
+    // Apply shadow only inside the cone and only if a shadow map exists
     float shadow = 1.0;
-    if (isDroneSpot && useSpotShadow && intensity > 0.0)
-        shadow = calcSpotShadow(normal, lightDir);
+    int shadowIndex = spotShadowLayer[spotIndex];
+    if (useSpotShadows && intensity > 0.0 && shadowIndex >= 0)
+        shadow = calcSpotShadow(shadowIndex, normal, lightDir);
 
     return (amb + (dif + spe) * intensity * shadow) * atten;
 }
@@ -177,22 +193,19 @@ vec3 calcSpotLight(SpotLight light, bool isDroneSpot, vec3 normal, vec3 viewDir,
 // ─────────────────────────────────────────────────────────────────────────────
 void main()
 {
-    vec3 norm    = normalize(fragNormal);
-    vec3 viewDir = normalize(viewPos - fragPos);
-    vec3 baseDiffuse = useMaterialOverride ? material.diffuse : fragColour;
+    vec3 norm     = normalize(fragNormal);
+    vec3 viewDir  = normalize(viewPos - fragPos);
+    vec3 baseDiff = useMaterialOverride ? material.diffuse : fragColour;
 
     vec3 result = vec3(0.0);
 
-    result += calcDirLight(sun, norm, viewDir, baseDiffuse);
+    result += calcDirLight(sun, norm, viewDir, baseDiff);
 
     for (int i = 0; i < numPointLights && i < MAX_POINT_LIGHTS; i++)
-        result += calcPointLight(pointLights[i], norm, viewDir, baseDiffuse);
+        result += calcPointLight(pointLights[i], norm, viewDir, baseDiff);
 
     for (int i = 0; i < numSpotLights && i < MAX_SPOTLIGHTS; i++)
-    {
-        bool isDrone = (i == numSpotLights - 1);
-        result += calcSpotLight(spotLights[i], isDrone, norm, viewDir, baseDiffuse);
-    }
+        result += calcSpotLight(spotLights[i], i, norm, viewDir, baseDiff);
 
     colour = vec4(result, 1.0);
 }
