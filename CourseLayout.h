@@ -4,27 +4,40 @@
 #include <GL/glew.h>
 #include <vector>
 
+// ── FlatPoly ─────────────────────────────────────────────────────────────────
+// Stores outline vertices + centroid as unique vertices (VBO) and references
+// them via a fan index list (EBO).  For an N-point polygon this uses N+1
+// vertices instead of the previous 3*(N-2), a ~3× reduction.
 struct FlatPoly {
-    GLuint vao = 0, vbo = 0;
-    int triCount = 0;
+    GLuint vao = 0, vbo = 0, ebo = 0;
+    int indexCount = 0;
     void build(const float pts[][2], int n,
                float r, float g, float b, float y = 0.0f);
     void draw()    const;
     void cleanup();
 };
 
-// One VAO that holds many polygons/discs concatenated — one glDrawArrays call.
+// ── BatchedFlat ───────────────────────────────────────────────────────────────
+// Packs many polygons / discs into one VBO+EBO pair — one draw call per batch.
+// Each polygon is stored as unique vertices; an EBO fan connects them.
 struct BatchedFlat {
-    GLuint vao = 0, vbo = 0;
-    int vertexCount = 0;
-    void upload(const std::vector<float>& data);
+    GLuint vao = 0, vbo = 0, ebo = 0;
+    int indexCount = 0;
+    // Legacy path: plain interleaved triangles (no EBO), used by old callers.
+    void upload(const std::vector<float>& verts);
+    // New indexed path: separate vertex and index arrays.
+    void uploadIndexed(const std::vector<float>& verts,
+                       const std::vector<unsigned int>& indices);
     void draw()    const;
     void cleanup();
 };
 
+// ── Disc ──────────────────────────────────────────────────────────────────────
+// Stores 1 centre + S rim vertices (S+1 total) and draws them as a fan via EBO.
+// Old path used 3*S vertices; new path uses S+1 — a ~3× saving.
 struct Disc {
-    GLuint vao = 0, vbo = 0;
-    int triCount = 0;
+    GLuint vao = 0, vbo = 0, ebo = 0;
+    int indexCount = 0;
     void build(float cx, float cz, float radius,
                float r, float g, float b,
                float y = 0.0f, int segs = 12);

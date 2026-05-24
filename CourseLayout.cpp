@@ -6557,84 +6557,242 @@ static std::vector<float> triangulate(const float pts[][2], int n)
 }
 
 // ============================================================
-//  FlatPoly
+//  FlatPoly  — EBO fan
+//  Unique vertices: N outline points.
+//  Indices produced by ear-clipping (or centroid fan fallback).
+//  Vertex count: N  (was 3*(N-2) with the old soup approach).
 // ============================================================
 void FlatPoly::build(const float pts[][2], int n,
                      float r, float g, float b, float y)
 {
-    if(n<3) return;
-    std::vector<float> tris=triangulate(pts,n);
-    triCount=(int)tris.size()/6;
-    if(triCount==0) return;
+    if(n < 3) return;
 
-    std::vector<float> buf; buf.reserve(triCount*3*9);
-    for(int t=0;t<triCount;++t)
-        for(int v=0;v<3;++v){
-            float px=tris[t*6+v*2],pz=tris[t*6+v*2+1];
-            buf.push_back(px);buf.push_back(y);buf.push_back(pz);
-            buf.push_back(0.f);buf.push_back(1.f);buf.push_back(0.f);
-            buf.push_back(r);buf.push_back(g);buf.push_back(b);
+    // ── 1. Build unique vertex buffer  (N points) ────────────
+    const GLsizei S = 9 * sizeof(float);
+    std::vector<float> verts;
+    verts.reserve(n * 9);
+    for(int i = 0; i < n; ++i){
+        verts.push_back(pts[i][0]); verts.push_back(y); verts.push_back(pts[i][1]);
+        verts.push_back(0.f);       verts.push_back(1.f); verts.push_back(0.f);
+        verts.push_back(r);         verts.push_back(g);   verts.push_back(b);
+    }
+
+    // ── 2. Produce triangle indices via ear-clipping ─────────
+    // Re-use the existing triangulate() which returns flat (x,z) triples.
+    // We map each (x,z) back to an outline index to build the EBO.
+    std::vector<float> tris = triangulate(pts, n);
+    int tc = (int)tris.size() / 6;  // 6 floats per triangle (3 vertices × 2 coords)
+    if(tc == 0) return;
+
+    // Build a quick lookup: (x,z) → vertex index among the N outline points.
+    // For the fallback centroid fan the centroid itself isn't in pts[], so we
+    // handle that by appending it as an extra vertex when needed.
+    std::vector<unsigned int> indices;
+    indices.reserve(tc * 3);
+
+    // Helper: find the index of a 2-D point in pts[], return n if not found.
+    auto findPt = [&](float px, float pz) -> unsigned int {
+        for(int i = 0; i < n; ++i)
+            if(std::fabs(pts[i][0] - px) < 1e-5f && std::fabs(pts[i][1] - pz) < 1e-5f)
+                return (unsigned int)i;
+        return (unsigned int)n;  // sentinel — centroid or unknown
+    };
+
+    // Centroid vertex index (only added to verts if actually needed)
+    unsigned int centroidIdx = (unsigned int)n;  // not yet inserted
+    bool centroidAdded = false;
+    float cenX = 0.f, cenZ = 0.f;
+    for(int i = 0; i < n; ++i){ cenX += pts[i][0]; cenZ += pts[i][1]; }
+    cenX /= n; cenZ /= n;
+
+    for(int t = 0; t < tc; ++t){
+        for(int v = 0; v < 3; ++v){
+            float px = tris[t*6 + v*2];
+            float pz = tris[t*6 + v*2 + 1];
+            unsigned int idx = findPt(px, pz);
+            if(idx == (unsigned int)n){
+                // This vertex is the centroid (fallback fan)
+                if(!centroidAdded){
+                    verts.push_back(cenX); verts.push_back(y); verts.push_back(cenZ);
+                    verts.push_back(0.f);  verts.push_back(1.f); verts.push_back(0.f);
+                    verts.push_back(r);    verts.push_back(g);   verts.push_back(b);
+                    centroidAdded = true;
+                }
+                idx = centroidIdx;
+            }
+            indices.push_back(idx);
         }
+    }
 
-    glGenVertexArrays(1,&vao);glBindVertexArray(vao);
-    glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    glBufferData(GL_ARRAY_BUFFER,(GLsizeiptr)(buf.size()*sizeof(float)),buf.data(),GL_STATIC_DRAW);
-    const GLsizei S=9*sizeof(float);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,S,(void*)0);               glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,S,(void*)(3*sizeof(float)));glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,S,(void*)(6*sizeof(float)));glEnableVertexAttribArray(2);
+    indexCount = (int)indices.size();
+
+    // ── 3. Upload VBO + EBO ───────────────────────────────────
+    glGenVertexArrays(1, &vao); glBindVertexArray(vao);
+
+    glGenBuffers(1, &vbo); glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(verts.size()*sizeof(float)),
+                 verts.data(), GL_STATIC_DRAW);
+
+    glGenBuffers(1, &ebo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 (GLsizeiptr)(indices.size()*sizeof(unsigned int)),
+                 indices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,S,(void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,S,(void*)(3*sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,S,(void*)(6*sizeof(float)));
+    glEnableVertexAttribArray(2);
+
     glBindVertexArray(0);
 }
-void FlatPoly::draw() const{if(!vao)return;glBindVertexArray(vao);glDrawArrays(GL_TRIANGLES,0,triCount*3);glBindVertexArray(0);}
-void FlatPoly::cleanup(){if(vbo){glDeleteBuffers(1,&vbo);vbo=0;}if(vao){glDeleteVertexArrays(1,&vao);vao=0;}triCount=0;}
+void FlatPoly::draw() const {
+    if(!vao) return;
+    glBindVertexArray(vao);
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+}
+void FlatPoly::cleanup() {
+    if(ebo){ glDeleteBuffers(1,&ebo); ebo=0; }
+    if(vbo){ glDeleteBuffers(1,&vbo); vbo=0; }
+    if(vao){ glDeleteVertexArrays(1,&vao); vao=0; }
+    indexCount=0;
+}
 
 // ============================================================
-//  Disc
+//  Disc  — EBO fan
+//  Unique vertices: 1 centre (index 0) + S rim points (indices 1..S).
+//  Total: S+1 vertices  (was 3*S with the old triangle-soup).
+//  Index triples: [0, i+1, (i%S)+1]  for i in [0, S).
 // ============================================================
 void Disc::build(float cx,float cz,float radius,float r,float g,float b,float y,int segs){
-    triCount=segs;
-    std::vector<float> buf;buf.reserve(segs*3*9);
-    auto push=[&](float px,float pz){
-        buf.push_back(px);buf.push_back(y);buf.push_back(pz);
-        buf.push_back(0.f);buf.push_back(1.f);buf.push_back(0.f);
-        buf.push_back(r);buf.push_back(g);buf.push_back(b);
-    };
-    const float PI2=6.28318530f;
-    for(int i=0;i<segs;++i){
-        float a0=PI2*i/segs,a1=PI2*(i+1)/segs;
-        push(cx,cz);
-        push(cx+radius*std::cos(a0),cz+radius*std::sin(a0));
-        push(cx+radius*std::cos(a1),cz+radius*std::sin(a1));
+    const GLsizei S9 = 9 * sizeof(float);
+    const float PI2 = 6.28318530f;
+    int totalVerts = segs + 1;  // centre + rim
+
+    std::vector<float> verts;
+    verts.reserve(totalVerts * 9);
+
+    // Vertex 0: centre
+    verts.push_back(cx); verts.push_back(y); verts.push_back(cz);
+    verts.push_back(0.f); verts.push_back(1.f); verts.push_back(0.f);
+    verts.push_back(r); verts.push_back(g); verts.push_back(b);
+
+    // Vertices 1..segs: rim
+    for(int i = 0; i < segs; ++i){
+        float a = PI2 * i / segs;
+        verts.push_back(cx + radius * std::cos(a));
+        verts.push_back(y);
+        verts.push_back(cz + radius * std::sin(a));
+        verts.push_back(0.f); verts.push_back(1.f); verts.push_back(0.f);
+        verts.push_back(r); verts.push_back(g); verts.push_back(b);
     }
-    glGenVertexArrays(1,&vao);glBindVertexArray(vao);
-    glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);
-    glBufferData(GL_ARRAY_BUFFER,(GLsizeiptr)(buf.size()*sizeof(float)),buf.data(),GL_STATIC_DRAW);
-    const GLsizei S=9*sizeof(float);
-    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,S,(void*)0);               glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,S,(void*)(3*sizeof(float)));glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,S,(void*)(6*sizeof(float)));glEnableVertexAttribArray(2);
+
+    // EBO fan: triangle i = [centre=0, rim_i=i+1, rim_{i+1}=(i%segs)+1]
+    std::vector<unsigned int> indices;
+    indices.reserve(segs * 3);
+    for(int i = 0; i < segs; ++i){
+        indices.push_back(0);
+        indices.push_back((unsigned int)(i + 1));
+        indices.push_back((unsigned int)(i % segs + 1));
+    }
+    indexCount = (int)indices.size();
+
+    glGenVertexArrays(1,&vao); glBindVertexArray(vao);
+
+    glGenBuffers(1,&vbo); glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    glBufferData(GL_ARRAY_BUFFER,(GLsizeiptr)(verts.size()*sizeof(float)),
+                 verts.data(),GL_STATIC_DRAW);
+
+    glGenBuffers(1,&ebo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 (GLsizeiptr)(indices.size()*sizeof(unsigned int)),
+                 indices.data(),GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,S9,(void*)0);               glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,S9,(void*)(3*sizeof(float)));glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,S9,(void*)(6*sizeof(float)));glEnableVertexAttribArray(2);
+
     glBindVertexArray(0);
 }
-void Disc::draw() const{if(!vao)return;glBindVertexArray(vao);glDrawArrays(GL_TRIANGLES,0,triCount*3);glBindVertexArray(0);}
-void Disc::cleanup(){if(vbo){glDeleteBuffers(1,&vbo);vbo=0;}if(vao){glDeleteVertexArrays(1,&vao);vao=0;}triCount=0;}
+void Disc::draw() const {
+    if(!vao) return;
+    glBindVertexArray(vao);
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+    glBindVertexArray(0);
+}
+void Disc::cleanup() {
+    if(ebo){ glDeleteBuffers(1,&ebo); ebo=0; }
+    if(vbo){ glDeleteBuffers(1,&vbo); vbo=0; }
+    if(vao){ glDeleteVertexArrays(1,&vao); vao=0; }
+    indexCount=0;
+}
 
 // ============================================================
-//  BatchedFlat — uploads pre-built vertex data, one draw call
+//  BatchedFlat
+//  Legacy path  (upload)       — plain triangle soup, glDrawArrays.
+//  Indexed path (uploadIndexed)— VBO+EBO, glDrawElements.
+//  Both share the same VAO/VBO/EBO fields; only one path is active
+//  per instance (ebo==0 → legacy, ebo!=0 → indexed).
 // ============================================================
 void BatchedFlat::upload(const std::vector<float>& data){
-    vertexCount=(int)data.size()/9;
-    if(vertexCount==0)return;
-    glGenVertexArrays(1,&vao);glBindVertexArray(vao);
-    glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    // Legacy: interleaved triangle soup — no EBO.
+    indexCount = 0;  // signals "use glDrawArrays"
+    int vertexCount = (int)data.size() / 9;
+    if(vertexCount == 0) return;
+    glGenVertexArrays(1,&vao); glBindVertexArray(vao);
+    glGenBuffers(1,&vbo); glBindBuffer(GL_ARRAY_BUFFER,vbo);
     glBufferData(GL_ARRAY_BUFFER,(GLsizeiptr)(data.size()*sizeof(float)),data.data(),GL_STATIC_DRAW);
     const GLsizei S=9*sizeof(float);
     glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,S,(void*)0);               glEnableVertexAttribArray(0);
     glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,S,(void*)(3*sizeof(float)));glEnableVertexAttribArray(1);
     glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,S,(void*)(6*sizeof(float)));glEnableVertexAttribArray(2);
     glBindVertexArray(0);
+    // Store vertex count in ebo field as a sentinel (ebo stays 0 = no EBO buffer)
+    // We repurpose indexCount<0 to mean "vertex count for ArrayDraw"
+    indexCount = -(vertexCount);  // negative = legacy path
 }
-void BatchedFlat::draw() const{if(!vao)return;glBindVertexArray(vao);glDrawArrays(GL_TRIANGLES,0,vertexCount);glBindVertexArray(0);}
-void BatchedFlat::cleanup(){if(vbo){glDeleteBuffers(1,&vbo);vbo=0;}if(vao){glDeleteVertexArrays(1,&vao);vao=0;}vertexCount=0;}
+
+void BatchedFlat::uploadIndexed(const std::vector<float>& verts,
+                                 const std::vector<unsigned int>& indices){
+    if(verts.empty() || indices.empty()) return;
+    indexCount = (int)indices.size();  // positive = indexed path
+
+    glGenVertexArrays(1,&vao); glBindVertexArray(vao);
+
+    glGenBuffers(1,&vbo); glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    glBufferData(GL_ARRAY_BUFFER,(GLsizeiptr)(verts.size()*sizeof(float)),
+                 verts.data(),GL_STATIC_DRAW);
+
+    glGenBuffers(1,&ebo); glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 (GLsizeiptr)(indices.size()*sizeof(unsigned int)),
+                 indices.data(),GL_STATIC_DRAW);
+
+    const GLsizei S=9*sizeof(float);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,S,(void*)0);               glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,S,(void*)(3*sizeof(float)));glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,S,(void*)(6*sizeof(float)));glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+}
+
+void BatchedFlat::draw() const {
+    if(!vao) return;
+    glBindVertexArray(vao);
+    if(indexCount > 0)
+        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+    else if(indexCount < 0)
+        glDrawArrays(GL_TRIANGLES, 0, -indexCount);
+    glBindVertexArray(0);
+}
+void BatchedFlat::cleanup(){
+    if(ebo){ glDeleteBuffers(1,&ebo); ebo=0; }
+    if(vbo){ glDeleteBuffers(1,&vbo); vbo=0; }
+    if(vao){ glDeleteVertexArrays(1,&vao); vao=0; }
+    indexCount=0;
+}
 
 // ============================================================
 //  Colours
