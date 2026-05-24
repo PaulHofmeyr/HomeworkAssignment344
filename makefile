@@ -3,8 +3,6 @@ CXXFLAGS = -std=c++17 -I. -Wall -Wextra -O2
 
 LIBS     = -lGL -lGLEW -lglfw -lm
 
-# Note: Vector.cpp and Matrix.cpp are excluded — they are #included by their headers.
-# shader.cpp is the original file from the project (unchanged).
 SRCS     = main.cpp \
            shader.cpp \
            Shape.cpp \
@@ -13,7 +11,18 @@ SRCS     = main.cpp \
            Cuboid.cpp \
            Cone.cpp \
            TriangularPrism.cpp \
-           Scene.cpp
+           Scene.cpp \
+           CourseLayout.cpp \
+           FloorNode.cpp \
+           RoadNode.cpp \
+           WaterNode.cpp \
+           RocksNode.cpp \
+           BridgeNode.cpp \
+           HutNode.cpp \
+           HoleNode.cpp \
+           WindmillNode.cpp \
+           TreeNode.cpp \
+           SceneRoot.cpp
 
 OBJS     = $(SRCS:.cpp=.o)
 TARGET   = minigolf

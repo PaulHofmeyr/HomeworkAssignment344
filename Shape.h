@@ -43,8 +43,8 @@ public:
     Shape(float r, float g, float b);
     virtual ~Shape();
     virtual void build() = 0;
-    void drawFilled()    const;
-    void drawWireframe() const;
+    virtual void drawFilled()    const;
+    virtual void drawWireframe() const;
 };
 
 #endif // SHAPE_H
