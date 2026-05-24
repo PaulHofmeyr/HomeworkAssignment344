@@ -16,9 +16,9 @@ public:
     float roll  = 0.0f;
 
     // Slowed down so the small scene stays navigable
-    float moveSpeed = 0.03f;
-    float rotSpeed  = 0.015f;
-    float liftSpeed = 0.03f;
+    float moveSpeed = 0.15f;
+    float rotSpeed  = 0.04f;
+    float liftSpeed = 0.15f;
 
     // Zoom: field-of-view in radians (45° default), clamped 10°–90°
     float fovY = 0.785398f;   // 45°

@@ -7,11 +7,10 @@
 #include "shader.hpp"
 #include "Transformations.h"
 #include "AppState.h"
-#include "SceneNode.h"
 #include "Drone.h"
 #include "PostProcess.h"
 #include "Lighting.h"
-#include "Scene.h"
+#include "SceneRoot.h"   // scene graph (replaces Scene.h)
 
 using namespace std;
 
@@ -25,6 +24,7 @@ static GLFWwindow *createWindow(int w, int h, const char *title)
 {
     glewExperimental = GL_TRUE;
     if (!glfwInit()) { cerr << "glfwInit failed: " << getError() << "\n"; exit(1); }
+
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -60,13 +60,13 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.53f, 0.81f, 0.98f, 1.0f);
 
-    // ── Shaders ───────────────────────────────────────────────────────────────
-    app.sceneShaderID    = LoadShaders("vertexShader.glsl",    "fragmentShader.glsl");
-    app.ppShaderID       = LoadShaders("postProcessVert.glsl", "postProcessFrag.glsl");
+    // ── Shaders ───────────────────────────────────────────────
+    app.sceneShaderID  = LoadShaders("vertexShader.glsl",    "fragmentShader.glsl");
+    app.ppShaderID     = LoadShaders("postProcessVert.glsl", "postProcessFrag.glsl");
     GLuint sunDepthShader  = LoadShaders("shadowDepthVert.glsl", "shadowDepthFrag.glsl");
     GLuint spotDepthShader = LoadShaders("spotDepthVert.glsl",   "spotDepthFrag.glsl");
 
-    // ── Sun shadow map FBO (unchanged) ────────────────────────────────────────
+    // ── Sun shadow map FBO ────────────────────────────────────
     GLuint sunFBO, sunDepthTex;
     glGenFramebuffers(1, &sunFBO);
     glGenTextures(1, &sunDepthTex);
@@ -84,37 +84,39 @@ int main()
     glDrawBuffer(GL_NONE); glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // ── Spotlight shadow map: 2D texture array (one layer per spotlight) ──────
-    // Each layer is rendered separately via framebuffer layer attachment.
-    // Texture unit 2 (0 = post-process quad, 1 = sun shadow map).
+    // ── Spotlight shadow map array ────────────────────────────
     GLuint spotArrayTex, spotFBO;
     glGenTextures(1, &spotArrayTex);
     glBindTexture(GL_TEXTURE_2D_ARRAY, spotArrayTex);
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT32F,
-                 SHADOW_W, SHADOW_W, MAX_SPOT_SHADOWS,   // width, height, layers
+                 SHADOW_W, SHADOW_W, MAX_SPOT_SHADOWS,
                  0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, border);
-
-    // Single FBO — we'll re-attach a different layer each depth pass
     glGenFramebuffers(1, &spotFBO);
 
-    // ── Rest of setup ─────────────────────────────────────────────────────────
+    // ── Post-process FBO ──────────────────────────────────────
     PostProcess pp;
     pp.init(app.windowWidth, app.windowHeight);
-    initScene();
 
+    // ── Build full scene graph ────────────────────────────────
+    buildSceneRoot();
+
+    // ── Drone ─────────────────────────────────────────────────
     Drone drone;
-    drone.px = 0.0f; drone.py = 3.5f; drone.pz = 6.0f; drone.yaw = 0.0f;
+    drone.px  =  0.0f;
+    drone.py  = 40.0f;
+    drone.pz  = 55.0f;
+    drone.yaw =  0.0f;
 
     Lighting lighting;
 
-    float orthoH = 10.0f;
+    float orthoH = 32.0f;
     float orthoW = orthoH * ((float)app.windowWidth / app.windowHeight);
-    Matrix<4,4> orthoMatrix = makeOrthographic(-orthoW, orthoW, -orthoH, orthoH, 0.1f, 200.0f);
+    Matrix<4,4> orthoMatrix = makeOrthographic(-orthoW, orthoW, -orthoH, orthoH, 0.1f, 300.0f);
 
     Matrix<4,4> sunLightProj = makeOrthographic(-12.f, 12.f, -12.f, 12.f, 1.0f, 40.f);
     Matrix<4,4> sunLightView = makeLookAt(-5.f, 15.f, -3.f, 0.f, 0.f, 0.f, 0.f, 1.f, 0.f);
@@ -122,10 +124,12 @@ int main()
 
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
+    // ── Rotor state ───────────────────────────────────────────
     static Matrix<4,4> rotorSpin = getIdentity4();
     static bool   rotorOn   = true;
     static double lastR     = 0.0;
     static double lastEnter = 0.0;
+    static const float pivX = 0.0f, pivY = 1.48f, pivZ = 0.43f;
 
     do
     {
@@ -134,81 +138,67 @@ int main()
 
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) break;
 
+        // Wireframe toggle (Enter)
         if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
             double now = glfwGetTime();
             if (now - lastEnter > 0.3) { app.wireframe = !app.wireframe; lastEnter = now; }
         }
+
+        // Rotor on/off (R)
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
             double now2 = glfwGetTime();
             if (now2 - lastR > 0.3) { rotorOn = !rotorOn; lastR = now2; }
         }
+
         if (rotorOn)
             rotorSpin = makeArbitraryRotation(0.03f, 0.f, 0.f, 1.f) * rotorSpin;
 
-        static const float pivX = 0.0f, pivY = 1.48f, pivZ = 0.43f;
-        Matrix<4,4> rotorModel = makeTranslation3D(pivX,pivY,pivZ)
-                                 * rotorSpin
-                                 * makeTranslation3D(-pivX,-pivY,-pivZ);
-        float rotorFlat[16]; flattenMatrix4(rotorModel, rotorFlat);
+        // Push spin into windmill rotor SceneNode
+        Matrix<4,4> toPiv  = makeTranslation3D(-pivX, -pivY, -pivZ);
+        Matrix<4,4> frmPiv = makeTranslation3D( pivX,  pivY,  pivZ);
+        Matrix<4,4> rotorModel = frmPiv * rotorSpin * toPiv;
+        updateRotor(rotorModel);
 
         float dx, dy, dz, dfx, dfy, dfz;
         drone.getPosition(dx, dy, dz);
         drone.getForward(dfx, dfy, dfz);
 
-        // ── 1. Build spotlight LSMs for this frame ─────────────────────────────
-        // upload() computes all spotLSMs[] as a side-effect; we call it with a
-        // temporary program just to get the matrices. The real upload happens
-        // in step 3, but we need LSMs before the depth passes.
-        // Simpler: compute them inline here the same way Lighting does, then
-        // call upload() again in step 3 (cheap — just uniform calls).
-        // Actually we just call upload() once here; step 3 calls it again.
-        // That costs two rounds of uniform uploads but keeps the code simple.
+        // Compute lighting (needed before depth passes)
         lighting.upload(app.sceneShaderID, app, dx, dy, dz, dfx, dfy, dfz);
-        // spotLSMs[] and numSpotShadows are now valid for this frame.
 
-        // ── 2. Sun shadow depth pass ───────────────────────────────────────────
+        // ── 1. Sun shadow depth pass ──────────────────────────
         glViewport(0, 0, SHADOW_W, SHADOW_W);
         glBindFramebuffer(GL_FRAMEBUFFER, sunFBO);
         glClear(GL_DEPTH_BUFFER_BIT);
         glUseProgram(sunDepthShader);
         setMat4(sunDepthShader, "lightSpaceMatrix", sunLSM);
-        { float id[16]; flattenMatrix4(getIdentity4(),id);
-          glUniformMatrix4fv(glGetUniformLocation(sunDepthShader,"modelMatrix"),1,GL_FALSE,id); }
-        drawScene(false);
-        glUniformMatrix4fv(glGetUniformLocation(sunDepthShader,"modelMatrix"),1,GL_FALSE,rotorFlat);
-        drawRotor(false);
+        { float id[16]; flattenMatrix4(getIdentity4(), id);
+          glUniformMatrix4fv(glGetUniformLocation(sunDepthShader, "modelMatrix"), 1, GL_FALSE, id); }
+        drawSceneRoot(sunDepthShader, false);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // ── 3. Spotlight shadow depth passes (one per shadow-casting light) ────
-        // We attach each layer of the array texture to the single spotFBO in
-        // turn, render the scene from that light's perspective, then move on.
+        // ── 2. Spotlight shadow depth passes ─────────────────
         glViewport(0, 0, SHADOW_W, SHADOW_W);
         glUseProgram(spotDepthShader);
-
         for (int i = 0; i < lighting.numSpotShadows; i++)
         {
-            // Attach layer i of the array texture as the depth target
             glBindFramebuffer(GL_FRAMEBUFFER, spotFBO);
             glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                       spotArrayTex, 0, i);
             glDrawBuffer(GL_NONE); glReadBuffer(GL_NONE);
             glClear(GL_DEPTH_BUFFER_BIT);
-
             setMat4(spotDepthShader, "lightSpaceMatrix", lighting.spotLSMs[i]);
-
-            { float id[16]; flattenMatrix4(getIdentity4(),id);
-              glUniformMatrix4fv(glGetUniformLocation(spotDepthShader,"modelMatrix"),1,GL_FALSE,id); }
-            drawScene(false);
-            glUniformMatrix4fv(glGetUniformLocation(spotDepthShader,"modelMatrix"),1,GL_FALSE,rotorFlat);
-            drawRotor(false);
+            { float id[16]; flattenMatrix4(getIdentity4(), id);
+              glUniformMatrix4fv(glGetUniformLocation(spotDepthShader, "modelMatrix"), 1, GL_FALSE, id); }
+            drawSceneRoot(spotDepthShader, false);
         }
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        // ── 4. Scene pass → post-process FBO ──────────────────────────────────
+        // ── 3. Scene pass → post-process FBO ─────────────────
         glViewport(0, 0, app.windowWidth, app.windowHeight);
 
         Matrix<4,4> perspMatrix = makePerspective(
-            drone.fovY, (float)app.windowWidth/app.windowHeight, 0.1f, 200.0f);
+            drone.fovY, (float)app.windowWidth / app.windowHeight, 0.1f, 300.0f);
         Matrix<4,4> view = drone.viewMatrix();
         Matrix<4,4> proj = app.perspProj ? perspMatrix : orthoMatrix;
 
@@ -220,7 +210,6 @@ int main()
         setMat4(app.sceneShaderID, "viewMatrix",       view);
         setMat4(app.sceneShaderID, "projectionMatrix", proj);
 
-        // Upload all light uniforms (second call — sets the correct program)
         lighting.upload(app.sceneShaderID, app, dx, dy, dz, dfx, dfy, dfz);
 
         // Sun shadow map → texture unit 1
@@ -237,37 +226,31 @@ int main()
         glUniform1i(glGetUniformLocation(app.sceneShaderID, "useSpotShadows"), 1);
         glUniform1i(glGetUniformLocation(app.sceneShaderID, "numSpotShadows"),
                     lighting.numSpotShadows);
-
-        // Upload each spotlight's light-space matrix as a uniform array
         for (int i = 0; i < lighting.numSpotShadows; i++) {
             std::string uname = "spotLightSpaceMatrix[" + std::to_string(i) + "]";
             setMat4(app.sceneShaderID, uname.c_str(), lighting.spotLSMs[i]);
         }
 
-        // Draw scene
-        { float id[16]; flattenMatrix4(getIdentity4(),id);
-          glUniformMatrix4fv(glGetUniformLocation(app.sceneShaderID,"modelMatrix"),1,GL_FALSE,id); }
-        drawScene(app.wireframe);
-        glUniformMatrix4fv(glGetUniformLocation(app.sceneShaderID,"modelMatrix"),1,GL_FALSE,rotorFlat);
-        drawRotor(app.wireframe);
+        // ── Single call draws the entire scene graph ──────────
+        drawSceneRoot(app.sceneShaderID, app.wireframe);
 
         pp.unbindFBO();
 
-        // ── 5. Post-process pass ───────────────────────────────────────────────
+        // ── 4. Post-process pass ──────────────────────────────
         glClear(GL_COLOR_BUFFER_BIT);
         pp.draw(app.ppShaderID);
-
         glfwSwapBuffers(window);
 
     } while (!glfwWindowShouldClose(window));
 
+    // ── Cleanup ───────────────────────────────────────────────
     glDeleteFramebuffers(1, &sunFBO);
     glDeleteTextures(1, &sunDepthTex);
     glDeleteFramebuffers(1, &spotFBO);
     glDeleteTextures(1, &spotArrayTex);
     glDeleteProgram(sunDepthShader);
     glDeleteProgram(spotDepthShader);
-    cleanupScene();
+    cleanupSceneRoot();
     glDeleteProgram(app.sceneShaderID);
     glDeleteProgram(app.ppShaderID);
     glfwTerminate();
