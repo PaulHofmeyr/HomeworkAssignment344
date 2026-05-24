@@ -8,6 +8,10 @@ LDFLAGS  = -L$(BREW_PREFIX)/lib
 
 LIBS     = -lGL -lGLEW -lglfw -lm
 
+# If pkg-config is available, prefer its flags for glfw/glew
+CXXFLAGS += $(shell pkg-config --cflags glew glfw3 2>/dev/null)
+LIBS     += $(shell pkg-config --libs   glew glfw3 2>/dev/null)
+
 SRCS     = main.cpp \
            shader.cpp \
            Shape.cpp \
@@ -37,7 +41,8 @@ TARGET   = minigolf
 
 all: $(TARGET)
 
-mac: LIBS := -lGLEW -lglfw -framework OpenGL -framework Cocoa -framework IOKit -framework CoreFoundation
+mac: CXX := clang++
+mac: LIBS := -lGLEW -lglfw -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -framework CoreFoundation
 mac: $(TARGET)
 
 $(TARGET): $(OBJS)

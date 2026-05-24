@@ -6619,6 +6619,24 @@ void Disc::draw() const{if(!vao)return;glBindVertexArray(vao);glDrawArrays(GL_TR
 void Disc::cleanup(){if(vbo){glDeleteBuffers(1,&vbo);vbo=0;}if(vao){glDeleteVertexArrays(1,&vao);vao=0;}triCount=0;}
 
 // ============================================================
+//  BatchedFlat — uploads pre-built vertex data, one draw call
+// ============================================================
+void BatchedFlat::upload(const std::vector<float>& data){
+    vertexCount=(int)data.size()/9;
+    if(vertexCount==0)return;
+    glGenVertexArrays(1,&vao);glBindVertexArray(vao);
+    glGenBuffers(1,&vbo);glBindBuffer(GL_ARRAY_BUFFER,vbo);
+    glBufferData(GL_ARRAY_BUFFER,(GLsizeiptr)(data.size()*sizeof(float)),data.data(),GL_STATIC_DRAW);
+    const GLsizei S=9*sizeof(float);
+    glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,S,(void*)0);               glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1,3,GL_FLOAT,GL_FALSE,S,(void*)(3*sizeof(float)));glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2,3,GL_FLOAT,GL_FALSE,S,(void*)(6*sizeof(float)));glEnableVertexAttribArray(2);
+    glBindVertexArray(0);
+}
+void BatchedFlat::draw() const{if(!vao)return;glBindVertexArray(vao);glDrawArrays(GL_TRIANGLES,0,vertexCount);glBindVertexArray(0);}
+void BatchedFlat::cleanup(){if(vbo){glDeleteBuffers(1,&vbo);vbo=0;}if(vao){glDeleteVertexArrays(1,&vao);vao=0;}vertexCount=0;}
+
+// ============================================================
 //  Colours
 // ============================================================
 #define COL_SAND    0.93f,0.85f,0.72f
@@ -6680,6 +6698,48 @@ static void buildRect(FlatPoly &poly,float x0,float x1,float z0,float z1,
     poly.build(q,4,r,g,b,y);
 }
 
+// ── Vertex-data builders (return CPU buffer, no GPU upload) ──────────────────
+// Same layout as FlatPoly::build: [x y z  nx ny nz  r g b] per vertex.
+
+static std::vector<float> polyVerts(const float pts[][2],int n,float r,float g,float b,float y){
+    std::vector<float> tris=triangulate(pts,n);
+    int tc=(int)tris.size()/6;
+    std::vector<float> buf;buf.reserve(tc*3*9);
+    for(int t=0;t<tc;++t)
+        for(int v=0;v<3;++v){
+            float px=tris[t*6+v*2],pz=tris[t*6+v*2+1];
+            buf.push_back(px);buf.push_back(y);buf.push_back(pz);
+            buf.push_back(0.f);buf.push_back(1.f);buf.push_back(0.f);
+            buf.push_back(r);buf.push_back(g);buf.push_back(b);
+        }
+    return buf;
+}
+
+static std::vector<float> shrunkPolyVerts(const float pts[][2],int n,float shrink,float r,float g,float b,float y){
+    auto inner=shrinkPoly(pts,n,shrink);
+    std::vector<float> flat;flat.reserve(inner.size()*2);
+    for(auto&p:inner){flat.push_back(p.first);flat.push_back(p.second);}
+    const float(*fpts)[2]=reinterpret_cast<const float(*)[2]>(flat.data());
+    return polyVerts(fpts,(int)inner.size(),r,g,b,y);
+}
+
+static std::vector<float> discVerts(float cx,float cz,float radius,float r,float g,float b,float y,int segs=12){
+    std::vector<float> buf;buf.reserve(segs*3*9);
+    auto push=[&](float px,float pz){
+        buf.push_back(px);buf.push_back(y);buf.push_back(pz);
+        buf.push_back(0.f);buf.push_back(1.f);buf.push_back(0.f);
+        buf.push_back(r);buf.push_back(g);buf.push_back(b);
+    };
+    const float PI2=6.28318530f;
+    for(int i=0;i<segs;++i){
+        float a0=PI2*i/segs,a1=PI2*(i+1)/segs;
+        push(cx,cz);
+        push(cx+radius*std::cos(a0),cz+radius*std::sin(a0));
+        push(cx+radius*std::cos(a1),cz+radius*std::sin(a1));
+    }
+    return buf;
+}
+
 void CourseLayout::build()
 {
     if(m_built)return;
@@ -6703,68 +6763,90 @@ void CourseLayout::build()
     m_rockbedPoly[8].build(rockbed09_outline,rockbed09_outlineCount,COL_ROCK,Y_ROCK);
     m_rockbedPoly[9].build(rockbed10_outline,rockbed10_outlineCount,COL_ROCK,Y_ROCK);
 
-    m_rockDiscCount=allRockDiscCount<200?allRockDiscCount:200;
-    for(int i=0;i<m_rockDiscCount;++i)
-        m_rockDiscs[i].build(allRockDiscs[i][0],allRockDiscs[i][1],allRockDiscs[i][2],
+    {
+        int count=allRockDiscCount<200?allRockDiscCount:200;
+        std::vector<float> buf;
+        for(int i=0;i<count;++i){
+            auto d=discVerts(allRockDiscs[i][0],allRockDiscs[i][1],allRockDiscs[i][2],
                              COL_ROCK,Y_ROCK+0.001f,10);
+            buf.insert(buf.end(),d.begin(),d.end());
+        }
+        m_batchRockDiscs.upload(buf);
+    }
 
-    // Green beds — sand outline always drawn, rings only if big enough
-    const float* gbPtrs[18]={
-        (float*)greenbed01_outline,(float*)greenbed02_outline,(float*)greenbed03_outline,
-        (float*)greenbed04_outline,(float*)greenbed05_outline,(float*)greenbed06_outline,
-        (float*)greenbed07_outline,(float*)greenbed08_outline,(float*)greenbed09_outline,
-        (float*)greenbed10_outline,(float*)greenbed11_outline,(float*)greenbed12_outline,
-        (float*)greenbed13_outline,(float*)greenbed14_outline,(float*)greenbed15_outline,
-        (float*)greenbed16_outline,(float*)greenbed17_outline,(float*)greenbed18_outline
-    };
-    const int gbCounts[18]={
-        greenbed01_outlineCount,greenbed02_outlineCount,greenbed03_outlineCount,
-        greenbed04_outlineCount,greenbed05_outlineCount,greenbed06_outlineCount,
-        greenbed07_outlineCount,greenbed08_outlineCount,greenbed09_outlineCount,
-        greenbed10_outlineCount,greenbed11_outlineCount,greenbed12_outlineCount,
-        greenbed13_outlineCount,greenbed14_outlineCount,greenbed15_outlineCount,
-        greenbed16_outlineCount,greenbed17_outlineCount,greenbed18_outlineCount
-    };
-    for(int i=0;i<18;++i){
-        const float(*pts)[2]=reinterpret_cast<const float(*)[2]>(gbPtrs[i]);
-        int n=gbCounts[i];
-        m_greenbedSand[i].build(pts,n,COL_GBSAND,Y_GBSAND);
-        float cx=0,cz=0;
-        for(int k=0;k<n;++k){cx+=pts[k][0];cz+=pts[k][1];}
-        cx/=n;cz/=n;
-        float maxR=0;
-        for(int k=0;k<n;++k){float dx=pts[k][0]-cx,dz=pts[k][1]-cz;float d=std::sqrt(dx*dx+dz*dz);if(d>maxR)maxR=d;}
-        if(maxR>0.8f){
-            buildShrunk(m_greenbedRing[i],  pts,n,0.25f,COL_GBRING,Y_GBRING);
-            buildShrunk(m_greenbedCentre[i],pts,n,0.50f,COL_GBCEN, Y_GBCEN);
+    // Per-hole green beds (sand + ring + centre) — one BatchedFlat each
+    {
+        const float* gbPtrs[18]={
+            (float*)greenbed01_outline,(float*)greenbed02_outline,(float*)greenbed03_outline,
+            (float*)greenbed04_outline,(float*)greenbed05_outline,(float*)greenbed06_outline,
+            (float*)greenbed07_outline,(float*)greenbed08_outline,(float*)greenbed09_outline,
+            (float*)greenbed10_outline,(float*)greenbed11_outline,(float*)greenbed12_outline,
+            (float*)greenbed13_outline,(float*)greenbed14_outline,(float*)greenbed15_outline,
+            (float*)greenbed16_outline,(float*)greenbed17_outline,(float*)greenbed18_outline
+        };
+        const int gbCounts[18]={
+            greenbed01_outlineCount,greenbed02_outlineCount,greenbed03_outlineCount,
+            greenbed04_outlineCount,greenbed05_outlineCount,greenbed06_outlineCount,
+            greenbed07_outlineCount,greenbed08_outlineCount,greenbed09_outlineCount,
+            greenbed10_outlineCount,greenbed11_outlineCount,greenbed12_outlineCount,
+            greenbed13_outlineCount,greenbed14_outlineCount,greenbed15_outlineCount,
+            greenbed16_outlineCount,greenbed17_outlineCount,greenbed18_outlineCount
+        };
+        for(int i=0;i<18;++i){
+            const float(*pts)[2]=reinterpret_cast<const float(*)[2]>(gbPtrs[i]);
+            int n=gbCounts[i];
+            std::vector<float> buf;
+            auto sand=polyVerts(pts,n,COL_GBSAND,Y_GBSAND);
+            buf.insert(buf.end(),sand.begin(),sand.end());
+            float cx=0,cz=0;
+            for(int k=0;k<n;++k){cx+=pts[k][0];cz+=pts[k][1];}
+            cx/=n;cz/=n;
+            float maxR=0;
+            for(int k=0;k<n;++k){float dx=pts[k][0]-cx,dz=pts[k][1]-cz;float d=std::sqrt(dx*dx+dz*dz);if(d>maxR)maxR=d;}
+            if(maxR>0.8f){
+                auto ring  =shrunkPolyVerts(pts,n,0.25f,COL_GBRING,Y_GBRING);
+                auto centre=shrunkPolyVerts(pts,n,0.50f,COL_GBCEN, Y_GBCEN);
+                buf.insert(buf.end(),ring.begin(),ring.end());
+                buf.insert(buf.end(),centre.begin(),centre.end());
+            }
+            m_greenbed[i].upload(buf);
         }
     }
 
-    m_holes[0].build(hole01_outline,hole01_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[1].build(hole02_outline,hole02_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[2].build(hole03_outline,hole03_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[3].build(hole04_outline,hole04_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[4].build(hole05_outline,hole05_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[5].build(hole06_outline,hole06_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[6].build(hole07_outline,hole07_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[7].build(hole08_outline,hole08_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[8].build(hole09_outline,hole09_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[9].build(hole10_outline,hole10_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[10].build(hole11_outline,hole11_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[11].build(hole12_outline,hole12_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[12].build(hole13_outline,hole13_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[13].build(hole14_outline,hole14_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[14].build(hole15_outline,hole15_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[15].build(hole16_outline,hole16_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[16].build(hole17_outline,hole17_outlineCount,COL_GREEN,Y_GREEN);
-    m_holes[17].build(hole18_outline,hole18_outlineCount,COL_GREEN,Y_GREEN);
+    // Per-hole putting greens
+    {
+        const float* holePtrs[18]={
+            (float*)hole01_outline,(float*)hole02_outline,(float*)hole03_outline,
+            (float*)hole04_outline,(float*)hole05_outline,(float*)hole06_outline,
+            (float*)hole07_outline,(float*)hole08_outline,(float*)hole09_outline,
+            (float*)hole10_outline,(float*)hole11_outline,(float*)hole12_outline,
+            (float*)hole13_outline,(float*)hole14_outline,(float*)hole15_outline,
+            (float*)hole16_outline,(float*)hole17_outline,(float*)hole18_outline
+        };
+        const int holeCounts[18]={
+            hole01_outlineCount,hole02_outlineCount,hole03_outlineCount,
+            hole04_outlineCount,hole05_outlineCount,hole06_outlineCount,
+            hole07_outlineCount,hole08_outlineCount,hole09_outlineCount,
+            hole10_outlineCount,hole11_outlineCount,hole12_outlineCount,
+            hole13_outlineCount,hole14_outlineCount,hole15_outlineCount,
+            hole16_outlineCount,hole17_outlineCount,hole18_outlineCount
+        };
+        for(int i=0;i<18;++i){
+            const float(*pts)[2]=reinterpret_cast<const float(*)[2]>(holePtrs[i]);
+            auto v=polyVerts(pts,holeCounts[i],COL_GREEN,Y_GREEN);
+            m_green[i].upload(v);
+        }
+    }
 
     m_bridge[0].build(bridge01_outline,bridge01_outlineCount,COL_BRIDGE,Y_BRIDGE);
     m_bridge[1].build(bridge02_outline,bridge02_outlineCount,COL_BRIDGE,Y_BRIDGE);
     m_hut.build(hut_outline,hut_outlineCount,COL_HUT,Y_HUT);
 
-    for(int i=0;i<18;++i)
-        m_flags[i].build(holeFlags[i][0],holeFlags[i][1],0.20f,COL_FLAG,Y_FLAG,8);
+    // Per-hole flag discs
+    for(int i=0;i<18;++i){
+        auto d=discVerts(holeFlags[i][0],holeFlags[i][1],0.20f,COL_FLAG,Y_FLAG,8);
+        m_flag[i].upload(d);
+    }
 }
 
 void CourseLayout::draw() const{
@@ -6772,25 +6854,22 @@ void CourseLayout::draw() const{
     m_road.draw();
     for(int i=0;i<3;++i)  m_dams[i].draw();
     for(int i=0;i<10;++i) m_rockbedPoly[i].draw();
-    for(int i=0;i<m_rockDiscCount;++i) m_rockDiscs[i].draw();
-    for(int i=0;i<18;++i) m_greenbedSand[i].draw();
-    for(int i=0;i<18;++i) m_greenbedRing[i].draw();
-    for(int i=0;i<18;++i) m_greenbedCentre[i].draw();
-    for(int i=0;i<18;++i) m_holes[i].draw();
+    m_batchRockDiscs.draw();
+    for(int i=0;i<18;++i) m_greenbed[i].draw();
+    for(int i=0;i<18;++i) m_green[i].draw();
     m_bridge[0].draw();m_bridge[1].draw();
     m_hut.draw();
-    for(int i=0;i<18;++i) m_flags[i].draw();
+    for(int i=0;i<18;++i) m_flag[i].draw();
 }
 
 void CourseLayout::cleanup(){
     m_floor.cleanup();m_road.cleanup();
     for(int i=0;i<3;++i)  m_dams[i].cleanup();
     for(int i=0;i<10;++i) m_rockbedPoly[i].cleanup();
-    for(int i=0;i<m_rockDiscCount;++i) m_rockDiscs[i].cleanup();
-    for(int i=0;i<18;++i){
-        m_greenbedSand[i].cleanup();m_greenbedRing[i].cleanup();
-        m_greenbedCentre[i].cleanup();m_holes[i].cleanup();m_flags[i].cleanup();
-    }
+    m_batchRockDiscs.cleanup();
+    for(int i=0;i<18;++i) m_greenbed[i].cleanup();
+    for(int i=0;i<18;++i) m_green[i].cleanup();
+    for(int i=0;i<18;++i) m_flag[i].cleanup();
     m_bridge[0].cleanup();m_bridge[1].cleanup();
     m_hut.cleanup();
     m_built=false;
