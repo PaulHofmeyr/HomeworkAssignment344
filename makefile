@@ -13,6 +13,8 @@ SRCS     = main.cpp \
            TriangularPrism.cpp \
            Scene.cpp \
            CourseLayout.cpp \
+           Prototype.cpp \
+           CourseObjects.cpp \
            FloorNode.cpp \
            RoadNode.cpp \
            WaterNode.cpp \
