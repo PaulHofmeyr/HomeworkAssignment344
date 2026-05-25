@@ -1,7 +1,8 @@
 #include "CourseLayout.h"
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <algorithm>
+#include <vector>
 
 // ============================================================
 //  Embedded coordinate data
@@ -6486,6 +6487,82 @@ static const float MAP_Z_MIN = -27.500f;
 static const float MAP_Z_MAX =  27.500f;
 
 // ============================================================
+//  Polygon simplification (Ramer–Douglas–Peucker)
+//  Drops intermediate outline points that barely change the shape.
+// ============================================================
+static float pointSegDist(float px, float pz,
+                          float ax, float az, float bx, float bz)
+{
+    float dx = bx - ax, dz = bz - az;
+    float len2 = dx * dx + dz * dz;
+    if(len2 < 1e-8f)
+    {
+        float ex = px - ax, ez = pz - az;
+        return std::sqrt(ex * ex + ez * ez);
+    }
+    float t = std::max(0.f, std::min(1.f, ((px - ax) * dx + (pz - az) * dz) / len2));
+    float qx = ax + t * dx, qz = az + t * dz;
+    float ex = px - qx, ez = pz - qz;
+    return std::sqrt(ex * ex + ez * ez);
+}
+
+static void dpKeep(const float pts[][2], int i0, int i1, float eps,
+                   std::vector<int>& keep)
+{
+    if(i1 <= i0 + 1)
+        return;
+    float maxD = 0.f;
+    int idx = -1;
+    for(int i = i0 + 1; i < i1; ++i)
+    {
+        float d = pointSegDist(pts[i][0], pts[i][1],
+                               pts[i0][0], pts[i0][1],
+                               pts[i1][0], pts[i1][1]);
+        if(d > maxD)
+        {
+            maxD = d;
+            idx = i;
+        }
+    }
+    if(maxD > eps && idx >= 0)
+    {
+        dpKeep(pts, i0, idx, eps, keep);
+        keep.push_back(idx);
+        dpKeep(pts, idx, i1, eps, keep);
+    }
+}
+
+static int simplifyOutline(float out[][2], const float pts[][2], int n, float eps)
+{
+    if(n <= 8)
+    {
+        for(int i = 0; i < n; ++i)
+        {
+            out[i][0] = pts[i][0];
+            out[i][1] = pts[i][1];
+        }
+        return n;
+    }
+
+    std::vector<int> keep;
+    keep.reserve((size_t)n);
+    keep.push_back(0);
+    dpKeep(pts, 0, n - 1, eps, keep);
+    keep.push_back(n - 1);
+    std::sort(keep.begin(), keep.end());
+    keep.erase(std::unique(keep.begin(), keep.end()), keep.end());
+
+    int m = (int)keep.size();
+    for(int i = 0; i < m; ++i)
+    {
+        int k = keep[(size_t)i];
+        out[i][0] = pts[k][0];
+        out[i][1] = pts[k][1];
+    }
+    return m;
+}
+
+// ============================================================
 //  Triangulation
 //  For polygons with <200 pts: ear-clipping (exact, handles concave)
 //  Safety: maxIter cap prevents hang on degenerate input
@@ -6563,7 +6640,10 @@ void FlatPoly::build(const float pts[][2], int n,
                      float r, float g, float b, float y)
 {
     if(n<3) return;
-    std::vector<float> tris=triangulate(pts,n);
+    float simp[512][2];
+    int sn=simplifyOutline(simp,pts,n,0.12f);
+    if(sn<3) return;
+    std::vector<float> tris=triangulate(simp,sn);
     triCount=(int)tris.size()/6;
     if(triCount==0) return;
 
@@ -6702,7 +6782,10 @@ static void buildRect(FlatPoly &poly,float x0,float x1,float z0,float z1,
 // Same layout as FlatPoly::build: [x y z  nx ny nz  r g b] per vertex.
 
 static std::vector<float> polyVerts(const float pts[][2],int n,float r,float g,float b,float y){
-    std::vector<float> tris=triangulate(pts,n);
+    float simp[512][2];
+    int sn=simplifyOutline(simp,pts,n,0.12f);
+    if(sn<3) return {};
+    std::vector<float> tris=triangulate(simp,sn);
     int tc=(int)tris.size()/6;
     std::vector<float> buf;buf.reserve(tc*3*9);
     for(int t=0;t<tc;++t)
@@ -6716,7 +6799,10 @@ static std::vector<float> polyVerts(const float pts[][2],int n,float r,float g,f
 }
 
 static std::vector<float> shrunkPolyVerts(const float pts[][2],int n,float shrink,float r,float g,float b,float y){
-    auto inner=shrinkPoly(pts,n,shrink);
+    float simp[512][2];
+    int sn=simplifyOutline(simp,pts,n,0.12f);
+    if(sn<3) return {};
+    auto inner=shrinkPoly(simp,sn,shrink);
     std::vector<float> flat;flat.reserve(inner.size()*2);
     for(auto&p:inner){flat.push_back(p.first);flat.push_back(p.second);}
     const float(*fpts)[2]=reinterpret_cast<const float(*)[2]>(flat.data());

@@ -45,8 +45,10 @@
 //  BOULDER_LARGE       ~1.2m grey granite disc
 //  BOULDER_SANDSTONE   ~1.0m warm sandstone disc
 //  LIGHT_POLE          lamp-post pole + globe head
-//  FENCE_POST          single wooden fence post
-//  FENCE_RAIL          horizontal fence rail
+//  FENCE_POST          thin black cylinder (perimeter fence)
+//  FENCE_RAIL          horizontal wooden rail (hole sections)
+//  FENCE_RAIL_BLACK    thin black horizontal rail (perimeter)
+//  FENCE_PICKET        very thin black vertical picket (perimeter)
 //  FLAGPOLE            metal pole + red banner
 //  HOLE_CUP            dark flat cylinder (cup)
 //  SHRUB               green hemisphere shrub
@@ -75,6 +77,8 @@ public:
         LIGHT_POLE,
         FENCE_POST,
         FENCE_RAIL,
+        FENCE_RAIL_BLACK,
+        FENCE_PICKET,
         FLAGPOLE,
         HOLE_CUP,
         SHRUB,

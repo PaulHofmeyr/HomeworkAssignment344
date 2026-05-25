@@ -20,6 +20,8 @@ SRCS     = main.cpp \
            Cuboid.cpp \
            Cone.cpp \
            TriangularPrism.cpp \
+           TurfWall.cpp \
+           PerimeterFenceMesh.cpp \
            Bollard.cpp \
            Scene.cpp \
            CourseLayout.cpp \

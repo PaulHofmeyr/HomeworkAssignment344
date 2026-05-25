@@ -26,7 +26,7 @@ static GLFWwindow *createWindow(int w, int h, const char *title)
     glewExperimental = GL_TRUE;
     if (!glfwInit()) { cerr << "glfwInit failed: " << getError() << "\n"; exit(1); }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 0);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -46,7 +46,7 @@ static void setMat4(GLuint prog, const char *name, const Matrix<4,4> &m)
     glUniformMatrix4fv(glGetUniformLocation(prog, name), 1, GL_FALSE, flat);
 }
 
-static const int SHADOW_W = 2048;
+static const int SHADOW_W = 1024;
 
 int main()
 {

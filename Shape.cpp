@@ -51,7 +51,8 @@ void Shape::buildBuffers(const std::vector<float> &filledData,
     filledVAO = uploadToGPU(filledData, filledVBO);
 
     wireVertexCount = (int)wireData.size() / 9;
-    wireVAO = uploadToGPU(wireData, wireVBO);
+    if(wireVertexCount > 0)
+        wireVAO = uploadToGPU(wireData, wireVBO);
 }
 
 void Shape::pushVertex(std::vector<float> &vec,
@@ -99,6 +100,8 @@ void Shape::drawFilled() const
 
 void Shape::drawWireframe() const
 {
+    if(!wireVAO || wireVertexCount <= 0)
+        return;
     glBindVertexArray(wireVAO);
     glDrawArrays(GL_LINES, 0, wireVertexCount);
     glBindVertexArray(0);

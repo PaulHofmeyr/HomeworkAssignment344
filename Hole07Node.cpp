@@ -2,6 +2,7 @@
 #include "NodeUtils.h"
 #include "Prototype.h"
 #include "CourseObjects.h"
+#include "TurfWall.h"
 
 std::shared_ptr<SceneNode> buildHole07Node(CourseLayout& layout)
 {
@@ -11,6 +12,7 @@ std::shared_ptr<SceneNode> buildHole07Node(CourseLayout& layout)
 
     node->addChild(fnNode([&layout](){ layout.drawGreenbed(IDX); }));
     node->addChild(fnNode([&layout](){ layout.drawGreen   (IDX); }));
+    node->addChild(shapeNode(TurfWall::createHole07()));
     node->addChild(fnNode([&layout](){ layout.drawFlag    (IDX); }));
 
     node->addChild(makeFlagpole(fx, fz));

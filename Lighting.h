@@ -126,7 +126,7 @@ public:
                 d.linear    = 0.027f;
                 d.quadratic = 0.0028f;
                 d.onAtDusk  = true;
-                d.castShadow = true;
+                d.castShadow = (s == 1);   // one shadow-casting cone per flood (not all three)
                 spotDefs.push_back(d);
             }
         }

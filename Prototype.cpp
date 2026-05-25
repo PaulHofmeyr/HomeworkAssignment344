@@ -15,7 +15,8 @@
 // Infrastructure
 #define C_STEEL      0.60f, 0.62f, 0.65f   // lamp post / fence metal
 #define C_LAMP_HEAD  0.90f, 0.88f, 0.70f   // warm lamp globe
-#define C_TIMBER     0.55f, 0.38f, 0.18f   // fence wood
+#define C_TIMBER     0.55f, 0.38f, 0.18f   // fence rail wood (hole sections)
+#define C_FENCE      0.05f, 0.05f, 0.05f   // perimeter fence posts
 #define C_CONCRETE   0.68f, 0.68f, 0.65f   // path edge / kerb
 // Course objects
 #define C_FLAG_POLE  0.80f, 0.80f, 0.80f   // silver pole
@@ -92,10 +93,12 @@ void ProtoRegistry::build()
     }
 
     // ── FENCE_POST ───────────────────────────────────────────
+    //  Thin black cylinder; base at y=0 when placed on ground.
     {
-        auto* s = new Cuboid(0.f, 0.5f, 0.f,
-                             0.05f, 0.5f, 0.05f,
-                             C_TIMBER);
+        constexpr float postH = 1.0f;
+        auto* s = new Cylinder(0.f, postH * 0.5f, 0.f,
+                               0.04f, postH, 8,
+                               C_FENCE);
         s->build();
         m_masters[FENCE_POST] = s;
     }
@@ -109,6 +112,27 @@ void ProtoRegistry::build()
                              C_TIMBER);
         s->build();
         m_masters[FENCE_RAIL] = s;
+    }
+
+    // ── FENCE_RAIL_BLACK ─────────────────────────────────────
+    //  Perimeter rail: 1 m unit length along X, scale to span edge.
+    {
+        auto* s = new Cuboid(0.f, 0.f, 0.f,
+                             0.5f, 0.02f, 0.02f,
+                             C_FENCE);
+        s->build();
+        m_masters[FENCE_RAIL_BLACK] = s;
+    }
+
+    // ── FENCE_PICKET ─────────────────────────────────────────
+    //  Vertical picket: 0.64 m tall (fits between top/bottom rails).
+    {
+        constexpr float picketH = 0.64f;
+        auto* s = new Cuboid(0.f, picketH * 0.5f, 0.f,
+                             0.006f, picketH * 0.5f, 0.006f,
+                             C_FENCE);
+        s->build();
+        m_masters[FENCE_PICKET] = s;
     }
 
     // ── FLAGPOLE ─────────────────────────────────────────────
