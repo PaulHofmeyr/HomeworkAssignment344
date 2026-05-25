@@ -1,0 +1,57 @@
+object,point_#,x,y
+hole 17 turf wall,1,5,411
+hole 17 turf wall,2,12,411
+hole 17 turf wall,3,16,425
+hole 17 turf wall,4,21,433
+hole 17 turf wall,5,21,444
+hole 17 turf wall,6,21,457
+hole 17 turf wall,7,14,463
+hole 17 turf wall,8,12,477
+hole 17 turf wall,9,17,489
+hole 17 turf wall,10,23,493
+hole 17 turf wall,11,36,497
+hole 17 turf wall,12,49,497
+hole 17 turf wall,13,64,496
+hole 17 turf wall,14,77,483
+hole 17 turf wall,15,84,490
+hole 17 turf wall,16,74,498
+hole 17 turf wall,17,66,503
+hole 17 turf wall,18,54,507
+hole 17 turf wall,19,39,508
+hole 17 turf wall,20,27,506
+hole 17 turf wall,21,16,497
+hole 17 turf wall,22,8,487
+hole 17 turf wall,23,5,479
+hole 17 turf wall,24,4,461
+hole 17 turf wall,25,4,452
+hole 17 turf wall,26,5,429
+hole 17 turf wall,27,5,420
+wall 2,1,69,402
+wall 2,2,76,400
+wall 2,3,82,414
+wall 2,4,86,426
+wall 2,5,87,437
+wall 2,6,87,449
+wall 2,7,80,447
+wall 2,8,80,432
+wall 2,9,77,421
+wall 2,10,72,408
+wall 3,1,9,346
+wall 3,2,20,346
+wall 3,3,19,333
+wall 3,4,20,316
+wall 3,5,25,305
+wall 3,6,33,302
+wall 3,7,44,302
+wall 3,8,52,305
+wall 3,9,57,312
+wall 3,10,65,314
+wall 3,11,67,306
+wall 3,12,57,298
+wall 3,13,44,291
+wall 3,14,30,290
+wall 3,15,21,295
+wall 3,16,14,303
+wall 3,17,11,312
+wall 3,18,10,320
+wall 3,19,8,334

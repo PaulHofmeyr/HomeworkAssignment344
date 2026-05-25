@@ -201,6 +201,85 @@ void TurfWall::build()
     buildBuffers(filled, wire);
 }
 
+// BEGIN HOLE14_TURF_WALL_DATA (auto-generated — do not edit by hand)
+// Source: hole 14.csv
+
+// 'hole 14 turf wall' (16 vertices)
+static const float hole14_turfWall_seg1[][2] = {
+    {  -7.888f,  22.047f},
+    {  -7.546f,  21.636f},
+    {  -7.741f,  21.109f},
+    {  -7.985f,  20.640f},
+    {  -7.985f,  20.112f},
+    {  -7.643f,  19.467f},
+    {  -7.302f,  18.822f},
+    {  -6.813f,  18.353f},
+    {  -6.862f,  17.884f},
+    {  -7.253f,  17.942f},
+    {  -7.741f,  18.294f},
+    {  -8.034f,  18.822f},
+    {  -8.230f,  19.467f},
+    {  -8.474f,  20.346f},
+    {  -8.376f,  21.050f},
+    {  -8.034f,  21.754f},
+};
+static const int hole14_turfWall_seg1Count = 16;
+
+// 'wall 2' (27 vertices)
+static const float hole14_turfWall_seg2[][2] = {
+    {  -5.885f,  22.985f},
+    {  -6.178f,  22.985f},
+    {  -6.178f,  23.337f},
+    {  -5.495f,  23.982f},
+    {  -4.713f,  24.510f},
+    {  -3.834f,  25.037f},
+    {  -2.906f,  25.272f},
+    {  -2.027f,  25.506f},
+    {  -1.148f,  25.506f},
+    {  -0.220f,  25.624f},
+    {   0.513f,  25.624f},
+    {   1.050f,  25.624f},
+    {   1.538f,  25.506f},
+    {   1.880f,  25.506f},
+    {   1.880f,  25.037f},
+    {   1.343f,  25.037f},
+    {   0.806f,  25.037f},
+    {   0.317f,  25.096f},
+    {  -0.220f,  25.096f},
+    {  -0.806f,  25.096f},
+    {  -1.392f,  25.096f},
+    {  -1.929f,  24.744f},
+    {  -2.613f,  24.510f},
+    {  -3.346f,  24.275f},
+    {  -4.078f,  23.865f},
+    {  -4.664f,  23.513f},
+    {  -5.299f,  23.396f},
+};
+static const int hole14_turfWall_seg2Count = 27;
+
+// 'wall 3' (10 vertices)
+static const float hole14_turfWall_seg3[][2] = {
+    {   2.418f,  22.751f},
+    {   2.906f,  22.633f},
+    {   3.443f,  22.751f},
+    {   3.736f,  23.102f},
+    {   4.078f,  23.396f},
+    {   4.078f,  23.865f},
+    {   3.883f,  24.216f},
+    {   3.492f,  23.923f},
+    {   3.199f,  23.571f},
+    {   2.808f,  23.220f},
+};
+static const int hole14_turfWall_seg3Count = 10;
+
+static void addHole14TurfWallSegments(TurfWall* wall)
+{
+    wall->addSegment(hole14_turfWall_seg1, hole14_turfWall_seg1Count);
+    wall->addSegment(hole14_turfWall_seg2, hole14_turfWall_seg2Count);
+    wall->addSegment(hole14_turfWall_seg3, hole14_turfWall_seg3Count);
+}
+// END HOLE14_TURF_WALL_DATA
+
 // BEGIN HOLE16_TURF_WALL_DATA (auto-generated — do not edit by hand)
 // Source: hole-16-turf-wall.csv
 
@@ -1188,6 +1267,88 @@ static void addHole03TurfWallSegments(TurfWall* wall)
 }
 // END HOLE03_TURF_WALL_DATA
 
+// BEGIN HOLE17_TURF_WALL_DATA (auto-generated — do not edit by hand)
+// Source: hole-17-turf-wall.csv
+
+// 'hole 17 turf wall' (27 vertices)
+static const float hole17_turfWall_seg1[][2] = {
+    { -19.805f,   5.336f},
+    { -19.463f,   5.336f},
+    { -19.267f,   4.515f},
+    { -19.023f,   4.046f},
+    { -19.023f,   3.401f},
+    { -19.023f,   2.639f},
+    { -19.365f,   2.287f},
+    { -19.463f,   1.466f},
+    { -19.219f,   0.762f},
+    { -18.926f,   0.528f},
+    { -18.291f,   0.293f},
+    { -17.656f,   0.293f},
+    { -16.923f,   0.352f},
+    { -16.288f,   1.114f},
+    { -15.946f,   0.704f},
+    { -16.435f,   0.235f},
+    { -16.825f,  -0.059f},
+    { -17.411f,  -0.293f},
+    { -18.144f,  -0.352f},
+    { -18.730f,  -0.235f},
+    { -19.267f,   0.293f},
+    { -19.658f,   0.880f},
+    { -19.805f,   1.349f},
+    { -19.853f,   2.404f},
+    { -19.853f,   2.932f},
+    { -19.805f,   4.280f},
+    { -19.805f,   4.808f},
+};
+static const int hole17_turfWall_seg1Count = 27;
+
+// 'wall 2' (10 vertices)
+static const float hole17_turfWall_seg2[][2] = {
+    { -16.679f,   5.864f},
+    { -16.337f,   5.981f},
+    { -16.044f,   5.160f},
+    { -15.849f,   4.456f},
+    { -15.800f,   3.811f},
+    { -15.800f,   3.108f},
+    { -16.142f,   3.225f},
+    { -16.142f,   4.104f},
+    { -16.288f,   4.749f},
+    { -16.532f,   5.512f},
+};
+static const int hole17_turfWall_seg2Count = 10;
+
+// 'wall 3' (19 vertices)
+static const float hole17_turfWall_seg3[][2] = {
+    { -19.609f,   9.147f},
+    { -19.072f,   9.147f},
+    { -19.121f,   9.909f},
+    { -19.072f,  10.906f},
+    { -18.828f,  11.551f},
+    { -18.437f,  11.727f},
+    { -17.900f,  11.727f},
+    { -17.509f,  11.551f},
+    { -17.265f,  11.141f},
+    { -16.874f,  11.023f},
+    { -16.777f,  11.493f},
+    { -17.265f,  11.962f},
+    { -17.900f,  12.372f},
+    { -18.584f,  12.431f},
+    { -19.023f,  12.138f},
+    { -19.365f,  11.668f},
+    { -19.512f,  11.141f},
+    { -19.560f,  10.672f},
+    { -19.658f,   9.851f},
+};
+static const int hole17_turfWall_seg3Count = 19;
+
+static void addHole17TurfWallSegments(TurfWall* wall)
+{
+    wall->addSegment(hole17_turfWall_seg1, hole17_turfWall_seg1Count);
+    wall->addSegment(hole17_turfWall_seg2, hole17_turfWall_seg2Count);
+    wall->addSegment(hole17_turfWall_seg3, hole17_turfWall_seg3Count);
+}
+// END HOLE17_TURF_WALL_DATA
+
 // BEGIN HOLE18_TURF_WALL_DATA (auto-generated — do not edit by hand)
 // Source: hole-18-turf-wall.csv
 // px 1..820, py 33..971 → 40×55 m map
@@ -1944,6 +2105,110 @@ static void addHole02TurfWallSegments(TurfWall* wall)
 }
 // END HOLE02_TURF_WALL_DATA
 
+// BEGIN HOLE06_TURF_WALL_DATA (auto-generated — do not edit by hand)
+// Source: hole-6-turf-wall.csv
+
+// 'hole 8 turf wall' (17 vertices)
+static const float hole06_turfWall_seg1[][2] = {
+    {  10.818f,  18.118f},
+    {  11.062f,  18.118f},
+    {  11.111f,  17.415f},
+    {  11.111f,  16.946f},
+    {  11.062f,  16.242f},
+    {  11.062f,  15.421f},
+    {  11.160f,  14.776f},
+    {  11.306f,  14.072f},
+    {  11.453f,  13.369f},
+    {  11.502f,  12.958f},
+    {  11.209f,  13.134f},
+    {  11.013f,  13.603f},
+    {  10.867f,  14.248f},
+    {  10.818f,  15.304f},
+    {  10.769f,  16.066f},
+    {  10.720f,  16.946f},
+    {  10.720f,  17.473f},
+};
+static const int hole06_turfWall_seg1Count = 17;
+
+// 'wall 2' (37 vertices)
+static const float hole06_turfWall_seg2[][2] = {
+    {  12.772f,  13.897f},
+    {  12.918f,  14.659f},
+    {  12.918f,  15.480f},
+    {  13.114f,  16.007f},
+    {  13.309f,  16.359f},
+    {  13.407f,  16.652f},
+    {  13.797f,  16.946f},
+    {  14.139f,  17.004f},
+    {  14.383f,  17.063f},
+    {  14.774f,  17.063f},
+    {  15.116f,  17.004f},
+    {  15.409f,  17.122f},
+    {  15.702f,  16.887f},
+    {  15.946f,  16.594f},
+    {  16.093f,  16.242f},
+    {  16.386f,  15.773f},
+    {  16.532f,  15.362f},
+    {  16.532f,  14.659f},
+    {  16.532f,  14.072f},
+    {  16.484f,  13.603f},
+    {  16.190f,  13.545f},
+    {  16.142f,  14.072f},
+    {  16.142f,  14.776f},
+    {  16.142f,  15.245f},
+    {  16.093f,  15.597f},
+    {  15.946f,  16.125f},
+    {  15.604f,  16.477f},
+    {  15.263f,  16.594f},
+    {  14.872f,  16.770f},
+    {  14.139f,  16.770f},
+    {  13.748f,  16.594f},
+    {  13.602f,  16.359f},
+    {  13.407f,  15.949f},
+    {  13.358f,  15.304f},
+    {  13.260f,  14.893f},
+    {  13.211f,  14.307f},
+    {  13.065f,  13.779f},
+};
+static const int hole06_turfWall_seg2Count = 37;
+
+// 'wall 3' (24 vertices)
+static const float hole06_turfWall_seg3[][2] = {
+    {  18.291f,  17.239f},
+    {  18.486f,  17.180f},
+    {  18.486f,  16.652f},
+    {  18.486f,  16.183f},
+    {  18.486f,  15.773f},
+    {  18.535f,  15.480f},
+    {  18.535f,  14.952f},
+    {  18.535f,  14.483f},
+    {  18.437f,  14.190f},
+    {  18.291f,  13.838f},
+    {  18.095f,  13.603f},
+    {  17.900f,  13.310f},
+    {  17.656f,  13.134f},
+    {  17.411f,  13.134f},
+    {  17.363f,  13.369f},
+    {  17.753f,  13.545f},
+    {  17.900f,  13.779f},
+    {  18.144f,  14.072f},
+    {  18.291f,  14.542f},
+    {  18.193f,  15.245f},
+    {  18.291f,  15.714f},
+    {  18.242f,  16.125f},
+    {  18.242f,  16.535f},
+    {  18.242f,  17.004f},
+};
+static const int hole06_turfWall_seg3Count = 24;
+
+static void addHole06TurfWallSegments(TurfWall* wall)
+{
+    wall->addSegment(hole06_turfWall_seg1, hole06_turfWall_seg1Count);
+    wall->addSegment(hole06_turfWall_seg2, hole06_turfWall_seg2Count);
+    wall->addSegment(hole06_turfWall_seg3, hole06_turfWall_seg3Count);
+}
+// END HOLE06_TURF_WALL_DATA
+
 // BEGIN HOLE07_TURF_WALL_DATA (auto-generated — do not edit by hand)
 // Source CSV → world metres (px 1..820, py 33..971 → 40×55 m map)
 
@@ -2158,6 +2423,17 @@ TurfWall* TurfWall::createHole13()
     return wall;
 }
 
+TurfWall* TurfWall::createHole14()
+{
+    constexpr float Y_BASE = 0.007f;
+    constexpr float HEIGHT = 0.32f;
+    constexpr float R = 0.12f, G = 0.50f, B = 0.14f;
+    auto* wall = new TurfWall(Y_BASE, HEIGHT, R, G, B);
+    addHole14TurfWallSegments(wall);
+    wall->build();
+    return wall;
+}
+
 TurfWall* TurfWall::createHole16()
 {
     constexpr float Y_BASE = 0.007f;
@@ -2165,6 +2441,17 @@ TurfWall* TurfWall::createHole16()
     constexpr float R = 0.12f, G = 0.50f, B = 0.14f;
     auto* wall = new TurfWall(Y_BASE, HEIGHT, R, G, B);
     addHole16TurfWallSegments(wall);
+    wall->build();
+    return wall;
+}
+
+TurfWall* TurfWall::createHole17()
+{
+    constexpr float Y_BASE = 0.007f;
+    constexpr float HEIGHT = 0.32f;
+    constexpr float R = 0.12f, G = 0.50f, B = 0.14f;
+    auto* wall = new TurfWall(Y_BASE, HEIGHT, R, G, B);
+    addHole17TurfWallSegments(wall);
     wall->build();
     return wall;
 }
@@ -2188,6 +2475,17 @@ TurfWall* TurfWall::createHole18()
 
     auto* wall = new TurfWall(Y_BASE, HEIGHT, R, G, B);
     addHole18TurfWallSegments(wall);
+    wall->build();
+    return wall;
+}
+
+TurfWall* TurfWall::createHole06()
+{
+    constexpr float Y_BASE = 0.007f;
+    constexpr float HEIGHT = 0.32f;
+    constexpr float R = 0.12f, G = 0.50f, B = 0.14f;
+    auto* wall = new TurfWall(Y_BASE, HEIGHT, R, G, B);
+    addHole06TurfWallSegments(wall);
     wall->build();
     return wall;
 }
