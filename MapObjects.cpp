@@ -2,8 +2,10 @@
 #include "NodeUtils.h"
 #include "GlbShape.h"
 #include "Bridge.h"
+#include "Crate.h"
 #include "Wave.h"
 #include "Gazebo.h"
+#include "Umbrella.h"
 #include "Bollard.h"
 #include "FloodLight.h"
 
@@ -27,6 +29,11 @@ constexpr const char* MAP_CSV = "objects-map.csv";
 constexpr float GAZEBO_MODEL_XZ  = 26.0f;
 constexpr float WAVE_MODEL_XZ    = 10.0f;
 constexpr float BRIDGE_MODEL_XZ  = 4.0f;
+constexpr float CRATE_MODEL_XZ   = 1.2f;
+constexpr float UMBRELLA_SCALE   = 0.35f;
+// GLB origins sit below ground — lift base so bottoms rest on turf (y=0).
+constexpr float CRATE_Y_LIFT_PER_SCALE  = 0.48f;
+constexpr float UMBRELLA_Y_LIFT         = 0.22f;
 constexpr float FIT_MARGIN       = 0.88f;
 constexpr float FIT_MARGIN_BRIDGE = 0.95f;
 constexpr float SCALE_BOLLARD    = 0.07f;
@@ -184,6 +191,25 @@ std::shared_ptr<SceneNode> buildMapObjectsNode(MapLightRegistry& lights)
     lights.pointLights.clear();
     lights.spotLights.clear();
     const auto data = loadMapCsv();
+
+    if (const auto it = data.find("crates"); it != data.end()) {
+        const auto& pts = it->second;
+        for (size_t i = 0; i + 3 < pts.size(); i += 4) {
+            std::vector<PxPt> quad(pts.begin() + (int)i, pts.begin() + (int)i + 4);
+            Placement pl = placementFitFootprint(toWorldPts(quad), 0.f, CRATE_MODEL_XZ);
+            pl.y += pl.scale * CRATE_Y_LIFT_PER_SCALE;
+            if (pl.scale > 0.05f)
+                addGlb(group, makeGlbShape<Crate>(pl.x, pl.y, pl.z, pl.scale, pl.yaw));
+        }
+    }
+
+    if (const auto it = data.find("umbrella"); it != data.end()) {
+        for (const auto& p : it->second) {
+            auto w = toWorld(p.x, p.y);
+            addGlb(group, makeGlbShape<Umbrella>(
+                w.first, UMBRELLA_Y_LIFT, w.second, UMBRELLA_SCALE, 0.f));
+        }
+    }
 
     if (const auto it = data.find("bridge"); it != data.end()) {
         const auto& pts = it->second;
