@@ -2,7 +2,6 @@
 #include "NodeUtils.h"
 #include "Prototype.h"
 #include "CourseObjects.h"
-
 std::shared_ptr<SceneNode> buildHole14Node(CourseLayout& layout)
 {
     auto node = std::make_shared<SceneNode>();
@@ -12,7 +11,6 @@ std::shared_ptr<SceneNode> buildHole14Node(CourseLayout& layout)
     node->addChild(fnNode([&layout](){ layout.drawGreenbed(IDX); }));
     node->addChild(fnNode([&layout](){ layout.drawGreen   (IDX); }));
     node->addChild(fnNode([&layout](){ layout.drawFlag    (IDX); }));
-
     node->addChild(makeFlagpole(fx, fz));
     node->addChild(makeHoleCup(fx, fz));
     node->addChild(makeBoulderCluster(fx - 1.5f, fz + 0.5f, 1.0f, 5, true));

@@ -1,0 +1,264 @@
+object,point_#,x,y
+paths,1,121,842
+paths,2,88,856
+paths,3,45,787
+paths,4,46,780
+paths,5,71,781
+paths,6,93,765
+paths,7,99,753
+paths,8,103,711
+paths,9,112,677
+paths,10,111,643
+paths,11,79,580
+paths,12,69,559
+paths,13,71,516
+paths,14,81,488
+paths,15,86,449
+paths,16,86,425
+paths,17,80,403
+paths,18,71,376
+paths,19,63,351
+paths,20,62,319
+paths,21,72,295
+paths,22,72,270
+paths,23,71,243
+paths,24,74,217
+paths,25,91,193
+paths,26,150,184
+paths,27,165,179
+paths,28,218,137
+paths,29,220,129
+paths,30,237,115
+paths,31,245,114
+paths,32,248,104
+paths,33,293,72
+paths,34,335,53
+paths,35,372,45
+paths,36,418,44
+paths,37,456,46
+paths,38,479,53
+paths,39,495,60
+paths,40,507,70
+paths,41,518,88
+paths,42,523,120
+paths,43,514,130
+paths,44,512,153
+paths,45,517,158
+paths,46,507,182
+paths,47,501,182
+paths,48,501,190
+paths,49,496,196
+paths,50,489,202
+paths,51,444,230
+paths,52,408,249
+paths,53,375,261
+paths,54,357,267
+paths,55,344,279
+paths,56,320,297
+paths,57,324,302
+paths,58,310,316
+paths,59,305,315
+paths,60,284,343
+paths,61,259,371
+paths,62,245,390
+paths,63,242,401
+paths,64,222,422
+paths,65,217,432
+paths,66,224,436
+paths,67,277,473
+paths,68,283,478
+paths,69,297,478
+paths,70,349,445
+paths,71,359,464
+paths,72,269,515
+paths,73,263,515
+paths,74,261,488
+paths,75,249,470
+paths,76,224,457
+paths,77,205,446
+paths,78,197,448
+paths,79,181,478
+paths,80,172,479
+paths,81,171,487
+paths,82,156,511
+paths,83,148,530
+paths,84,141,558
+paths,85,137,590
+paths,86,141,613
+paths,87,149,637
+paths,88,156,649
+paths,89,164,661
+paths,90,176,673
+paths,91,188,685
+paths,92,201,689
+paths,93,213,685
+paths,94,222,677
+paths,95,230,667
+paths,96,237,664
+paths,97,258,675
+paths,98,247,671
+paths,99,277,676
+paths,100,292,668
+paths,101,301,674
+paths,102,315,683
+paths,103,328,689
+paths,104,337,679
+paths,105,365,695
+paths,106,378,717
+paths,107,366,728
+paths,108,320,731
+paths,109,298,739
+paths,110,278,769
+paths,111,270,773
+paths,112,221,863
+paths,113,189,845
+paths,114,245,750
+paths,115,191,712
+paths,116,146,675
+paths,117,134,672
+paths,118,125,680
+paths,119,115,833
+path inner,1,117,593
+path inner,2,91,555
+path inner,3,91,526
+path inner,4,99,502
+path inner,5,106,471
+path inner,6,109,432
+path inner,7,104,415
+path inner,8,86,376
+path inner,9,76,340
+path inner,10,85,316
+path inner,11,89,303
+path inner,12,88,292
+path inner,13,95,289
+path inner,14,92,244
+path inner,15,99,214
+path inner,16,142,201
+path inner,17,195,181
+path inner,18,236,144
+path inner,19,241,136
+path inner,20,246,128
+path inner,21,255,125
+path inner,22,278,107
+path inner,23,280,100
+path inner,24,343,69
+path inner,25,369,64
+path inner,26,390,61
+path inner,27,447,62
+path inner,28,455,67
+path inner,29,478,74
+path inner,30,494,87
+path inner,31,498,104
+path inner,32,498,119
+path inner,33,495,160
+path inner,34,483,184
+path inner,35,465,196
+path inner,36,435,211
+path inner,37,393,232
+path inner,38,356,245
+path inner,39,347,247
+path inner,40,344,257
+path inner,41,335,267
+path inner,42,325,267
+path inner,43,305,289
+path inner,44,303,299
+path inner,45,294,304
+path inner,46,286,313
+path inner,47,252,355
+path inner,48,193,424
+path inner,49,151,488
+path inner,50,129,534
+right path,1,219,925
+right path,2,219,955
+right path,3,483,944
+right path,4,564,864
+right path,5,585,866
+right path,6,606,890
+right path,7,640,901
+right path,8,730,900
+right path,9,760,879
+right path,10,765,848
+right path,11,756,825
+right path,12,758,787
+right path,13,774,767
+right path,14,797,729
+right path,15,792,696
+right path,16,769,674
+right path,17,732,653
+right path,18,712,632
+right path,19,704,599
+right path,20,685,595
+right path,21,690,635
+right path,22,753,686
+right path,23,771,734
+right path,24,740,778
+right path,25,732,810
+right path,26,744,844
+right path,27,744,869
+right path,28,727,883
+right path,29,714,887
+right path,30,696,885
+right path,31,679,883
+right path,32,647,882
+right path,33,614,867
+right path,34,593,848
+right path,35,571,838
+right path,36,546,849
+right path,37,526,865
+right path,38,493,914
+right path,39,482,921
+right path,40,454,930
+middle path,1,297,758
+middle path,2,284,780
+middle path,3,354,800
+middle path,4,443,798
+middle path,5,512,768
+middle path,6,557,745
+middle path,7,593,707
+middle path,8,603,676
+middle path,9,605,628
+middle path,10,626,587
+middle path,11,642,548
+middle path,12,664,530
+middle path,13,664,508
+middle path,14,639,515
+middle path,15,624,529
+middle path,16,614,566
+middle path,17,598,584
+middle path,18,582,638
+middle path,19,579,688
+middle path,20,570,711
+middle path,21,552,718
+middle path,22,499,749
+middle path,23,441,779
+middle path,24,399,789
+middle path,25,355,781
+upper path,1,744,271
+upper path,2,767,291
+upper path,3,738,334
+upper path,4,734,380
+upper path,5,725,406
+upper path,6,719,454
+upper path,7,719,515
+upper path,8,719,572
+upper path,9,706,589
+upper path,10,688,588
+upper path,11,702,561
+upper path,12,701,527
+upper path,13,679,526
+upper path,14,671,508
+upper path,15,686,500
+upper path,16,693,473
+upper path,17,691,453
+upper path,18,684,433
+upper path,19,664,412
+upper path,20,656,381
+upper path,21,661,344
+upper path,22,676,326
+upper path,23,707,319
+upper path inner,1,701,415
+upper path inner,2,679,389
+upper path inner,3,683,352
+upper path inner,4,703,341
+upper path inner,5,718,353
+upper path inner,6,710,381

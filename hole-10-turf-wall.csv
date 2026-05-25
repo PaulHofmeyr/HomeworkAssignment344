@@ -1,0 +1,76 @@
+object,point_#,x,y
+hole 10 turf wall,1,177,482
+hole 10 turf wall,2,182,490
+hole 10 turf wall,3,175,501
+hole 10 turf wall,4,170,512
+hole 10 turf wall,5,163,524
+hole 10 turf wall,6,156,542
+hole 10 turf wall,7,151,557
+hole 10 turf wall,8,148,573
+hole 10 turf wall,9,149,611
+hole 10 turf wall,10,154,624
+hole 10 turf wall,11,162,638
+hole 10 turf wall,12,172,656
+hole 10 turf wall,13,186,672
+hole 10 turf wall,14,199,679
+hole 10 turf wall,15,198,688
+hole 10 turf wall,16,188,684
+hole 10 turf wall,17,179,677
+hole 10 turf wall,18,172,669
+hole 10 turf wall,19,159,653
+hole 10 turf wall,20,148,633
+hole 10 turf wall,21,144,620
+hole 10 turf wall,22,142,613
+hole 10 turf wall,23,140,599
+hole 10 turf wall,24,139,577
+hole 10 turf wall,25,140,564
+hole 10 turf wall,26,143,555
+hole 10 turf wall,27,145,545
+hole 10 turf wall,28,148,531
+hole 10 turf wall,29,154,521
+hole 10 turf wall,30,158,510
+hole 10 turf wall,31,165,499
+hole 10 turf wall,32,170,490
+wall 2,1,204,446
+wall 2,2,220,455
+wall 2,3,235,463
+wall 2,4,243,469
+wall 2,5,252,480
+wall 2,6,260,491
+wall 2,7,261,509
+wall 2,8,261,520
+wall 2,9,255,531
+wall 2,10,251,542
+wall 2,11,246,554
+wall 2,12,240,568
+wall 2,13,235,581
+wall 2,14,232,594
+wall 2,15,230,611
+wall 2,16,228,626
+wall 2,17,229,639
+wall 2,18,230,648
+wall 2,19,234,654
+wall 2,20,233,663
+wall 2,21,226,663
+wall 2,22,221,659
+wall 2,23,221,647
+wall 2,24,221,633
+wall 2,25,222,616
+wall 2,26,222,603
+wall 2,27,224,590
+wall 2,28,226,581
+wall 2,29,229,573
+wall 2,30,233,563
+wall 2,31,237,553
+wall 2,32,243,540
+wall 2,33,248,528
+wall 2,34,251,516
+wall 2,35,253,501
+wall 2,36,249,494
+wall 2,37,243,485
+wall 2,38,230,478
+wall 2,39,221,472
+wall 2,40,211,468
+wall 2,41,203,460
+wall 2,42,199,456
+wall 2,43,200,450

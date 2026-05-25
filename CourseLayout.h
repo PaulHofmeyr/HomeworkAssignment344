@@ -4,6 +4,10 @@
 #include <GL/glew.h>
 #include <vector>
 
+// Rock-bed boulder placements from map data: {world_x, world_z, radius}.
+int  courseRockBedDiscCount();
+const float (*courseRockBedDiscs())[3];
+
 struct FlatPoly {
     GLuint vao = 0, vbo = 0;
     int triCount = 0;
@@ -44,10 +48,7 @@ public:
     void drawFloor()        const { m_floor.draw(); }
     void drawRoad()         const { m_road.draw(); }
     void drawWater()        const { for(int i=0;i<3;++i) m_dams[i].draw(); }
-    void drawRocks()        const {
-        for(int i=0;i<10;++i) m_rockbedPoly[i].draw();
-        m_batchRockDiscs.draw();   // all rock discs in one call
-    }
+    void drawRocks()        const {}  // 3D boulders via RocksNode / makeRockBedBoulders
     // Per-hole draw methods — used by individual HoleXXNode files
     void drawGreenbed(int i) const { if(i>=0&&i<18) m_greenbed[i].draw(); }
     void drawGreen   (int i) const { if(i>=0&&i<18) m_green[i].draw();    }
@@ -63,7 +64,7 @@ public:
 
 private:
     FlatPoly    m_floor;
-    FlatPoly    m_road;
+    BatchedFlat m_road;
     FlatPoly    m_dams[3];
     FlatPoly    m_rockbedPoly[10];
     BatchedFlat m_batchRockDiscs;

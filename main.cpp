@@ -6,6 +6,7 @@
 
 #include "shader.hpp"
 #include "Transformations.h"
+#include "stb_image.h"   // implementation already defined in Skybox.h
 #include "AppState.h"
 #include "Drone.h"
 #include "PostProcess.h"
@@ -26,7 +27,7 @@ static GLFWwindow *createWindow(int w, int h, const char *title)
     glewExperimental = GL_TRUE;
     if (!glfwInit()) { cerr << "glfwInit failed: " << getError() << "\n"; exit(1); }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
+    glfwWindowHint(GLFW_SAMPLES, 0);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
@@ -46,7 +47,7 @@ static void setMat4(GLuint prog, const char *name, const Matrix<4,4> &m)
     glUniformMatrix4fv(glGetUniformLocation(prog, name), 1, GL_FALSE, flat);
 }
 
-static const int SHADOW_W = 2048;
+static const int SHADOW_W = 1024;
 
 int main()
 {
@@ -131,6 +132,115 @@ int main()
     pp.init(app.windowWidth, app.windowHeight);
     Skybox skybox;
     skybox.init();
+
+    // ── Grass texture (tex unit 7) ────────────────────────────────────────────
+    GLuint grassTexID = 0;
+    {
+        int tw, th, tch;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* tdata = stbi_load("grass.png", &tw, &th, &tch, 0);
+        if (!tdata) { std::cerr << "WARNING: could not load grass.png\n"; }
+        else {
+            glGenTextures(1, &grassTexID);
+            glBindTexture(GL_TEXTURE_2D, grassTexID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GLenum fmt = (tch == 4) ? GL_RGBA : GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D, 0, fmt, tw, th, 0, fmt, GL_UNSIGNED_BYTE, tdata);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            stbi_image_free(tdata);
+        }
+    }
+
+    // ── Limestone texture — rocks / boulders (tex unit 8) ────────────────────
+    GLuint limestoneTexID = 0;
+    {
+        int tw, th, tch;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* tdata = stbi_load("rockText.jpg", &tw, &th, &tch, 0);
+        if (!tdata) {
+            std::cerr << "ERROR: could not load rockText.jpg — " << stbi_failure_reason() << "\n";
+        } else {
+            std::cout << "Loaded rockText.jpg (" << tw << "x" << th << ", ch=" << tch << ")\n";
+            glGenTextures(1, &limestoneTexID);
+            glBindTexture(GL_TEXTURE_2D, limestoneTexID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GLenum fmt = (tch == 4) ? GL_RGBA : GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D, 0, fmt, tw, th, 0, fmt, GL_UNSIGNED_BYTE, tdata);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            stbi_image_free(tdata);
+            std::cout << "Rock texture uploaded, ID=" << limestoneTexID << "\n";
+        }
+    }
+
+    // ── Concrete texture — paths / road (tex unit 9) ─────────────────────────
+    GLuint concreteTexID = 0;
+    {
+        int tw, th, tch;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* tdata = stbi_load("concrete_grey.jpg", &tw, &th, &tch, 0);
+        if (!tdata) { std::cerr << "WARNING: could not load concrete_grey.jpg\n"; }
+        else {
+            glGenTextures(1, &concreteTexID);
+            glBindTexture(GL_TEXTURE_2D, concreteTexID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GLenum fmt = (tch == 4) ? GL_RGBA : GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D, 0, fmt, tw, th, 0, fmt, GL_UNSIGNED_BYTE, tdata);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            stbi_image_free(tdata);
+        }
+    }
+
+    // ── Water texture (tex unit 10) ───────────────────────────────────────────
+    GLuint waterTexID = 0;
+    {
+        int tw, th, tch;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* tdata = stbi_load("water.png", &tw, &th, &tch, 0);
+        if (!tdata) { std::cerr << "WARNING: could not load water.png\n"; }
+        else {
+            glGenTextures(1, &waterTexID);
+            glBindTexture(GL_TEXTURE_2D, waterTexID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GLenum fmt = (tch == 4) ? GL_RGBA : GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D, 0, fmt, tw, th, 0, fmt, GL_UNSIGNED_BYTE, tdata);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            stbi_image_free(tdata);
+        }
+    }
+
+    // ── Shrub texture (tex unit 11) ───────────────────────────────────────────
+    GLuint shrubTexID = 0;
+    {
+        int tw, th, tch;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* tdata = stbi_load("Shrub.jpg", &tw, &th, &tch, 0);
+        if (!tdata) { std::cerr << "ERROR: could not load Shrub.jpg — " << stbi_failure_reason() << "\n"; }
+        else {
+            std::cout << "Loaded Shrub.jpg (" << tw << "x" << th << ", ch=" << tch << ")\n";
+            glGenTextures(1, &shrubTexID);
+            glBindTexture(GL_TEXTURE_2D, shrubTexID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GLenum fmt = (tch == 4) ? GL_RGBA : GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D, 0, fmt, tw, th, 0, fmt, GL_UNSIGNED_BYTE, tdata);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            stbi_image_free(tdata);
+        }
+    }
 
     // ── Build full scene graph ────────────────────────────────
     buildSceneRoot();
@@ -304,6 +414,37 @@ int main()
             setMat4(app.sceneShaderID, uname.c_str(), lighting.spotLSMs[i]);
         }
 
+        // Grass texture → texture unit 7
+        glActiveTexture(GL_TEXTURE7);
+        glBindTexture(GL_TEXTURE_2D, grassTexID);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "grassTex"),    7);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "useGrassTex"), grassTexID != 0 ? 1 : 0);
+
+        // Limestone texture (rocks/boulders) → texture unit 8
+        glActiveTexture(GL_TEXTURE8);
+        glBindTexture(GL_TEXTURE_2D, limestoneTexID);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "limestoneTex"),    8);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "useLimestoneTex"), limestoneTexID != 0 ? 1 : 0);
+
+        // Concrete texture (paths/road) → texture unit 9
+        glActiveTexture(GL_TEXTURE9);
+        glBindTexture(GL_TEXTURE_2D, concreteTexID);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "concreteTex"),    9);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "useConcreteTex"), concreteTexID != 0 ? 1 : 0);
+
+        // Water texture → texture unit 10
+        glActiveTexture(GL_TEXTURE10);
+        glBindTexture(GL_TEXTURE_2D, waterTexID);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "waterTex"),    10);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "useWaterTex"), waterTexID != 0 ? 1 : 0);
+        glUniform1f(glGetUniformLocation(app.sceneShaderID, "waterTime"),   (float)glfwGetTime());
+
+        // Shrub texture → texture unit 11
+        glActiveTexture(GL_TEXTURE11);
+        glBindTexture(GL_TEXTURE_2D, shrubTexID);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "shrubTex"),    11);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "useShrubTex"), shrubTexID != 0 ? 1 : 0);
+
         // ── Single call draws the entire scene graph ──────────
         drawSceneRoot(app.sceneShaderID, app.wireframe);
 
@@ -323,6 +464,11 @@ int main()
     glDeleteTextures(1, &spotArrayTex);
     glDeleteFramebuffers(MAX_POINT_CUBE_SHADOWS_MAIN, cubeFBO);
     glDeleteTextures(MAX_POINT_CUBE_SHADOWS_MAIN, cubeShadowTex);
+    if (grassTexID)    glDeleteTextures(1, &grassTexID);
+    if (limestoneTexID) glDeleteTextures(1, &limestoneTexID);
+    if (concreteTexID)  glDeleteTextures(1, &concreteTexID);
+    if (waterTexID)     glDeleteTextures(1, &waterTexID);
+    if (shrubTexID)     glDeleteTextures(1, &shrubTexID);
     // Skybox cleanup
     skybox.cleanup();
     glDeleteProgram(skyboxShader);

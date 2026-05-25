@@ -1,6 +1,7 @@
 #include "CourseObjects.h"
 #include "Prototype.h"
 #include "NodeUtils.h"
+#include "PerimeterFenceMesh.h"
 #include <cmath>
 #include <cstdlib>   // for rand()
 
@@ -53,6 +54,56 @@ std::shared_ptr<SceneNode> makeBoulderCluster(
 }
 
 // ============================================================
+//  makeRockBedBoulders — map rock-bed discs → 3D cylinders
+// ============================================================
+std::shared_ptr<SceneNode> makeRockBedBoulders(int count, const float discs[][3])
+{
+    auto& R = ProtoRegistry::get();
+    auto group = std::make_shared<SceneNode>();
+
+    for(int i = 0; i < count; ++i)
+    {
+        const float x = discs[i][0];
+        const float z = discs[i][1];
+        const float r = discs[i][2];
+
+        ProtoRegistry::ID btype;
+        float baseR;
+        if(r < 0.22f)
+        {
+            btype = ProtoRegistry::BOULDER_SMALL;
+            baseR = 0.28f;
+        }
+        else if(r < 0.32f)
+        {
+            btype = ProtoRegistry::BOULDER_MED;
+            baseR = 0.45f;
+        }
+        else if(i % 5 == 0)
+        {
+            btype = ProtoRegistry::BOULDER_SANDSTONE;
+            baseR = 0.56f;
+        }
+        else
+        {
+            btype = ProtoRegistry::BOULDER_LARGE;
+            baseR = 0.68f;
+        }
+
+        float scale = r / baseR;
+        if(scale < 0.5f)
+            scale = 0.5f;
+
+        const float sxz = scale * seededRand(i * 11 + 1, 0.92f, 1.08f);
+        const float sy  = scale * seededRand(i * 11 + 3, 0.88f, 1.05f);
+        const float rot = seededRand(i * 13 + 5, 0.f, 6.28318530f);
+
+        group->addChild(R.place(btype, x, 0.f, z, sxz, sy, sxz, rot));
+    }
+    return group;
+}
+
+// ============================================================
 //  makeLampPost
 // ============================================================
 std::shared_ptr<SceneNode> makeLampPost(float x, float z)
@@ -78,7 +129,7 @@ std::shared_ptr<SceneNode> makeFenceSection(
     float dx = endX - startX;
     float dz = endZ - startZ;
     float len = std::sqrt(dx*dx + dz*dz);
-    float angle = std::atan2(dx, dz);  // Y rotation to face along fence
+    float angle = std::atan2(-dz, dx);
 
     // Posts
     for(int i = 0; i < posts; ++i)
@@ -103,6 +154,111 @@ std::shared_ptr<SceneNode> makeFenceSection(
                              scaleX, 1.f, 1.f, angle));
 
     return group;
+}
+
+// ============================================================
+//  Perimeter fence edge — posts, top/bottom rails, pickets
+// ============================================================
+static int postsAlongLength(float len, float spacing)
+{
+    if(len < 1e-4f)
+        return 1;
+    return std::max(2, (int)std::ceil(len / spacing) + 1);
+}
+
+static std::shared_ptr<SceneNode> makePerimeterFenceEdge(
+    float startX, float startZ,
+    float endX,   float endZ,
+    float spacing)
+{
+    auto& R = ProtoRegistry::get();
+    auto group = std::make_shared<SceneNode>();
+
+    constexpr float RAIL_BOT        = 0.18f;
+    constexpr float RAIL_TOP        = 0.82f;
+    constexpr float RAIL_UNIT_LEN   = 1.0f;
+    constexpr int   PICKETS_PER_BAY = 18;
+
+    float dx = endX - startX;
+    float dz = endZ - startZ;
+    float len = std::sqrt(dx * dx + dz * dz);
+    if(len < 1e-4f)
+        return group;
+
+    int posts = postsAlongLength(len, spacing);
+
+    // Posts along edge (corners at t=0 and t=1)
+    for(int i = 0; i < posts; ++i)
+    {
+        float t = (posts > 1) ? (float)i / (float)(posts - 1) : 0.f;
+        float px = startX + t * dx;
+        float pz = startZ + t * dz;
+        group->addChild(R.place(ProtoRegistry::FENCE_POST, px, 0.f, pz));
+    }
+
+    // Rails + pickets per bay: from one post to the next
+    for(int i = 0; i < posts - 1; ++i)
+    {
+        float t0 = (float)i / (float)(posts - 1);
+        float t1 = (float)(i + 1) / (float)(posts - 1);
+        float sx = startX + t0 * dx;
+        float sz = startZ + t0 * dz;
+        float ex = startX + t1 * dx;
+        float ez = startZ + t1 * dz;
+
+        float segDx = ex - sx;
+        float segDz = ez - sz;
+        float segLen = std::sqrt(segDx * segDx + segDz * segDz);
+        if(segLen < 1e-4f)
+            continue;
+
+        // Align local +X with segment direction in XZ
+        float angle  = std::atan2(-segDz, segDx);
+        float midX   = (sx + ex) * 0.5f;
+        float midZ   = (sz + ez) * 0.5f;
+        float scaleX = segLen / RAIL_UNIT_LEN;
+
+        // Top & bottom rails: post to post
+        group->addChild(R.place(ProtoRegistry::FENCE_RAIL_BLACK,
+                                midX, RAIL_BOT, midZ,
+                                scaleX, 1.f, 1.f, angle));
+        group->addChild(R.place(ProtoRegistry::FENCE_RAIL_BLACK,
+                                midX, RAIL_TOP, midZ,
+                                scaleX, 1.f, 1.f, angle));
+
+        // 18 vertical pickets evenly spaced between the two posts
+        for(int k = 1; k <= PICKETS_PER_BAY; ++k)
+        {
+            float t = (float)k / (float)(PICKETS_PER_BAY + 1);
+            float px = sx + t * segDx;
+            float pz = sz + t * segDz;
+            group->addChild(R.place(ProtoRegistry::FENCE_PICKET,
+                                    px, RAIL_BOT, pz,
+                                    1.f, 1.f, 1.f, angle));
+        }
+    }
+
+    return group;
+}
+
+std::shared_ptr<SceneNode> makeFencePostLine(
+    float startX, float startZ,
+    float endX,   float endZ,
+    float spacing)
+{
+    return makePerimeterFenceEdge(startX, startZ, endX, endZ, spacing);
+}
+
+// ============================================================
+//  makePerimeterFence — rectangle along course map bounds
+// ============================================================
+std::shared_ptr<SceneNode> makePerimeterFence(
+    float xMin, float xMax,
+    float zMin, float zMax,
+    float spacing)
+{
+    // One merged mesh instead of thousands of prototype clones (much faster).
+    return shapeNode(PerimeterFenceMesh::create(xMin, xMax, zMin, zMax, spacing));
 }
 
 // ============================================================

@@ -17,8 +17,10 @@
 //  │ Function            │ What it makes                    │
 //  ├─────────────────────┼──────────────────────────────────┤
 //  │ makeBoulderCluster  │ group of 3-5 boulders            │
+//  │ makeRockBedBoulders │ all map rock-bed discs as 3D   │
 //  │ makeLampPost        │ single lamp post + globe         │
-//  │ makeFenceSection    │ 3 posts + 2 rails                │
+//  │ makeFenceSection    │ posts + rails (hole decor)       │
+//  │ makePerimeterFence  │ posts, rails, pickets on border   │
 //  │ makeFlagpole        │ pole + banner                    │
 //  │ makeHoleCup         │ dark cup marker                  │
 //  │ makeShrubBed        │ cluster of shrubs                │
@@ -43,17 +45,31 @@ std::shared_ptr<SceneNode> makeBoulderCluster(
     int   count  = 4,
     bool  useSandstone = false);
 
+// All rock-bed markers from CourseLayout map data as scaled 3D boulders.
+std::shared_ptr<SceneNode> makeRockBedBoulders(
+    int count, const float discs[][3]);
+
 // ── Lamp post ────────────────────────────────────────────────
 //  Places a single lamp post at (x, 0, z)
 std::shared_ptr<SceneNode> makeLampPost(float x, float z);
 
-// ── Fence section ────────────────────────────────────────────
-//  startX/Z → endX/Z defines the fence line
-//  posts    = number of posts along the line
+// ── Fence section (posts + wooden rails, for holes) ──────────
 std::shared_ptr<SceneNode> makeFenceSection(
     float startX, float startZ,
     float endX,   float endZ,
     int   posts = 3);
+
+// ── Fence post line (posts + black rails + pickets) ──────────
+std::shared_ptr<SceneNode> makeFencePostLine(
+    float startX, float startZ,
+    float endX,   float endZ,
+    float spacing = 2.0f);
+
+// ── Full map perimeter fence (posts, rails, pickets) ─────────
+std::shared_ptr<SceneNode> makePerimeterFence(
+    float xMin, float xMax,
+    float zMin, float zMax,
+    float spacing = 2.0f);
 
 // ── Flagpole + banner ────────────────────────────────────────
 std::shared_ptr<SceneNode> makeFlagpole(float x, float z);

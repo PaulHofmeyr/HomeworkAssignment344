@@ -1,0 +1,94 @@
+object,point_#,x,y
+hole 14 turf wall,1,123,211
+hole 14 turf wall,2,131,203
+hole 14 turf wall,3,144,210
+hole 14 turf wall,4,158,218
+hole 14 turf wall,5,170,225
+hole 14 turf wall,6,180,231
+hole 14 turf wall,7,188,239
+hole 14 turf wall,8,203,260
+hole 14 turf wall,9,212,277
+hole 14 turf wall,10,218,288
+hole 14 turf wall,11,218,301
+hole 14 turf wall,12,213,317
+hole 14 turf wall,13,208,337
+hole 14 turf wall,14,204,349
+hole 14 turf wall,15,196,357
+hole 14 turf wall,16,191,366
+hole 14 turf wall,17,179,378
+hole 14 turf wall,18,171,384
+hole 14 turf wall,19,164,391
+hole 14 turf wall,20,156,394
+hole 14 turf wall,21,149,400
+hole 14 turf wall,22,138,404
+hole 14 turf wall,23,132,409
+hole 14 turf wall,24,121,414
+hole 14 turf wall,25,112,415
+hole 14 turf wall,26,104,406
+hole 14 turf wall,27,98,396
+hole 14 turf wall,28,91,382
+hole 14 turf wall,29,86,366
+hole 14 turf wall,30,81,354
+hole 14 turf wall,31,78,341
+hole 14 turf wall,32,80,327
+hole 14 turf wall,33,86,315
+hole 14 turf wall,34,88,307
+hole 14 turf wall,35,90,294
+hole 14 turf wall,36,99,294
+hole 14 turf wall,37,99,303
+hole 14 turf wall,38,101,313
+hole 14 turf wall,39,94,321
+hole 14 turf wall,40,91,332
+hole 14 turf wall,41,91,346
+hole 14 turf wall,42,94,359
+hole 14 turf wall,43,96,369
+hole 14 turf wall,44,100,376
+hole 14 turf wall,45,103,386
+hole 14 turf wall,46,110,395
+hole 14 turf wall,47,118,400
+hole 14 turf wall,48,128,400
+hole 14 turf wall,49,141,395
+hole 14 turf wall,50,153,387
+hole 14 turf wall,51,165,379
+hole 14 turf wall,52,176,369
+hole 14 turf wall,53,187,356
+hole 14 turf wall,54,194,346
+hole 14 turf wall,55,201,337
+hole 14 turf wall,56,206,323
+hole 14 turf wall,57,206,309
+hole 14 turf wall,58,206,295
+hole 14 turf wall,59,203,284
+hole 14 turf wall,60,198,272
+hole 14 turf wall,61,189,260
+hole 14 turf wall,62,181,250
+hole 14 turf wall,63,174,245
+hole 14 turf wall,64,164,233
+hole 14 turf wall,65,151,226
+hole 14 turf wall,66,137,218
+wall 2,1,94,242
+wall 2,2,94,267
+wall 2,3,99,272
+wall 2,4,107,270
+wall 2,5,114,269
+wall 2,6,120,266
+wall 2,7,125,266
+wall 2,8,132,267
+wall 2,9,147,272
+wall 2,10,159,273
+wall 2,11,159,263
+wall 2,12,142,254
+wall 2,13,132,247
+wall 2,14,119,246
+wall 2,15,109,244
+wall 3,1,123,323
+wall 3,2,121,333
+wall 3,3,124,344
+wall 3,4,132,353
+wall 3,5,146,353
+wall 3,6,157,353
+wall 3,7,171,344
+wall 3,8,168,340
+wall 3,9,158,340
+wall 3,10,151,340
+wall 3,11,144,337
+wall 3,12,134,329

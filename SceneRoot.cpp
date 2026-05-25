@@ -12,6 +12,7 @@
 #include "WindmillNode.h"
 #include "TreeNode.h"
 #include "CourseObjects.h"
+#include "TurfWall.h"
 
 // ── Globals ──────────────────────────────────────────────────
 std::shared_ptr<SceneNode> g_root;
@@ -51,6 +52,8 @@ void buildSceneRoot()
     g_root->addChild( buildHole07Node(*g_layout) );
     g_root->addChild( buildHole08Node(*g_layout) );
     g_root->addChild( buildHole09Node(*g_layout) );
+    // Holes 1 & 9 share four turf walls — one draw (see hole-1-turf-wall.csv)
+    g_root->addChild( shapeNode(TurfWall::createHole01Hole09()) );
     g_root->addChild( buildHole10Node(*g_layout) );
     g_root->addChild( buildHole11Node(*g_layout) );
     g_root->addChild( buildHole12Node(*g_layout) );
@@ -69,12 +72,8 @@ void buildSceneRoot()
     // 7. Perimeter trees
     g_root->addChild( buildTreeGroup() );
 
-    // 8. Perimeter fence along course boundary (example)
-    //    Add more sections here to fence the whole course.
-    g_root->addChild(makeFenceSection(-20.f, -27.5f,  20.f, -27.5f, 8)); // south edge
-    g_root->addChild(makeFenceSection( 20.f, -27.5f,  20.f,  27.5f, 8)); // east edge
-    g_root->addChild(makeFenceSection( 20.f,  27.5f, -20.f,  27.5f, 8)); // north edge
-    g_root->addChild(makeFenceSection(-20.f,  27.5f, -20.f, -27.5f, 8)); // west edge
+    // 8. Perimeter fence — black posts ~2 m apart, map border
+    g_root->addChild(makePerimeterFence(-20.f, 20.f, -27.5f, 27.5f, 2.0f));
 
     // 9. Lamp posts along main path (example positions)
     g_root->addChild(makeLampPost( 0.f, -25.f));
