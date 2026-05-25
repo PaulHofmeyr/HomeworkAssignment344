@@ -1,0 +1,141 @@
+object,point_#,x,y
+hole 9 turf wall,1,317,786
+hole 9 turf wall,2,297,778
+hole 9 turf wall,3,278,770
+hole 9 turf wall,4,265,785
+hole 9 turf wall,5,254,803
+hole 9 turf wall,6,250,827
+hole 9 turf wall,7,255,841
+hole 9 turf wall,8,262,854
+hole 9 turf wall,9,263,859
+hole 9 turf wall,10,246,860
+hole 9 turf wall,11,229,867
+hole 9 turf wall,12,220,876
+hole 9 turf wall,13,221,883
+hole 9 turf wall,14,232,883
+hole 9 turf wall,15,245,869
+hole 9 turf wall,16,260,869
+hole 9 turf wall,17,276,871
+hole 9 turf wall,18,291,870
+hole 9 turf wall,19,289,859
+hole 9 turf wall,20,282,853
+hole 9 turf wall,21,275,850
+hole 9 turf wall,22,268,844
+hole 9 turf wall,23,264,834
+hole 9 turf wall,24,261,821
+hole 9 turf wall,25,264,812
+hole 9 turf wall,26,268,802
+hole 9 turf wall,27,278,792
+hole 9 turf wall,28,290,790
+hole 9 turf wall,29,305,794
+hole 9 turf wall,30,318,796
+wall 2,1,347,801
+wall 2,2,376,806
+wall 2,3,388,809
+wall 2,4,400,810
+wall 2,5,418,807
+wall 2,6,431,804
+wall 2,7,443,800
+wall 2,8,451,799
+wall 2,9,452,806
+wall 2,10,442,811
+wall 2,11,431,815
+wall 2,12,420,820
+wall 2,13,411,823
+wall 2,14,409,830
+wall 2,15,417,834
+wall 2,16,424,832
+wall 2,17,434,827
+wall 2,18,444,822
+wall 2,19,446,834
+wall 2,20,438,831
+wall 2,21,432,837
+wall 2,22,424,838
+wall 2,23,410,838
+wall 2,24,399,830
+wall 2,25,392,823
+wall 2,26,382,816
+wall 2,27,371,812
+wall 2,28,359,808
+wall 3,1,480,785
+wall 3,2,488,781
+wall 3,3,497,785
+wall 3,4,497,793
+wall 3,5,501,802
+wall 3,6,503,815
+wall 3,7,497,828
+wall 3,8,491,835
+wall 3,9,491,842
+wall 3,10,498,844
+wall 3,11,510,851
+wall 3,12,516,860
+wall 3,13,517,873
+wall 3,14,514,882
+wall 3,15,508,892
+wall 3,16,499,904
+wall 3,17,490,915
+wall 3,18,480,921
+wall 3,19,468,926
+wall 3,20,459,926
+wall 3,21,458,917
+wall 3,22,465,917
+wall 3,23,475,913
+wall 3,24,484,906
+wall 3,25,490,898
+wall 3,26,497,891
+wall 3,27,503,881
+wall 3,28,507,870
+wall 3,29,505,859
+wall 3,30,496,854
+wall 3,31,486,850
+wall 3,32,473,852
+wall 3,33,464,855
+wall 3,34,454,856
+wall 3,35,438,857
+wall 3,36,424,863
+wall 3,37,410,867
+wall 3,38,406,861
+wall 3,39,395,859
+wall 3,40,393,855
+wall 3,41,389,849
+wall 3,42,382,843
+wall 3,43,375,841
+wall 3,44,356,840
+wall 3,45,363,838
+wall 3,46,367,830
+wall 3,47,374,831
+wall 3,48,384,838
+wall 3,49,395,847
+wall 3,50,403,851
+wall 3,51,412,853
+wall 3,52,425,853
+wall 3,53,440,846
+wall 3,54,454,842
+wall 3,55,466,838
+wall 3,56,479,831
+wall 3,57,490,822
+wall 3,58,493,812
+wall 3,59,491,801
+wall 3,60,482,795
+wall 4,1,220,917
+wall 4,2,222,926
+wall 4,3,247,927
+wall 4,4,279,927
+wall 4,5,307,927
+wall 4,6,330,927
+wall 4,7,356,926
+wall 4,8,374,926
+wall 4,9,392,927
+wall 4,10,404,927
+wall 4,11,415,926
+wall 4,12,416,917
+wall 4,13,403,918
+wall 4,14,384,917
+wall 4,15,370,917
+wall 4,16,354,917
+wall 4,17,330,918
+wall 4,18,312,918
+wall 4,19,292,918
+wall 4,20,280,917
+wall 4,21,264,917
+wall 4,22,245,917

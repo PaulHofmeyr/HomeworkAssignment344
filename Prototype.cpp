@@ -38,39 +38,41 @@
 // ============================================================
 void ProtoRegistry::build()
 {
-    // ── BOULDER_SMALL  (~0.3m diam) ──────────────────────────
-    //  A short wide cylinder with squashed height = natural
-    //  boulder look.  Sides=10 gives a good irregular feel.
+    // ── BOULDER_SMALL  — base on y=0, cy = half height ───────
     {
-        auto* s = new Cylinder(0.f, 0.10f, 0.f,
-                               0.18f, 0.20f, 10,
+        constexpr float h = 0.34f;
+        auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
+                               0.28f, h, 10,
                                C_GRANITE_D);
         s->build();
         m_masters[BOULDER_SMALL] = s;
     }
 
-    // ── BOULDER_MED  (~0.7m diam) ────────────────────────────
+    // ── BOULDER_MED ──────────────────────────────────────────
     {
-        auto* s = new Cylinder(0.f, 0.22f, 0.f,
-                               0.38f, 0.44f, 10,
+        constexpr float h = 0.78f;
+        auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
+                               0.45f, h, 10,
                                C_GRANITE_D);
         s->build();
         m_masters[BOULDER_MED] = s;
     }
 
-    // ── BOULDER_LARGE  (~1.2m diam) ──────────────────────────
+    // ── BOULDER_LARGE ────────────────────────────────────────
     {
-        auto* s = new Cylinder(0.f, 0.35f, 0.f,
-                               0.62f, 0.70f, 12,
+        constexpr float h = 1.18f;
+        auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
+                               0.68f, h, 12,
                                C_GRANITE_L);
         s->build();
         m_masters[BOULDER_LARGE] = s;
     }
 
-    // ── BOULDER_SANDSTONE  (~1.0m diam, warm tone) ───────────
+    // ── BOULDER_SANDSTONE ────────────────────────────────────
     {
-        auto* s = new Cylinder(0.f, 0.28f, 0.f,
-                               0.50f, 0.56f, 10,
+        constexpr float h = 0.98f;
+        auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
+                               0.56f, h, 10,
                                C_SANDSTONE);
         s->build();
         m_masters[BOULDER_SANDSTONE] = s;

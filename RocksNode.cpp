@@ -1,7 +1,9 @@
 #include "RocksNode.h"
-#include "NodeUtils.h"
+#include "CourseObjects.h"
 
-std::shared_ptr<SceneNode> buildRocksNode(CourseLayout& layout)
+std::shared_ptr<SceneNode> buildRocksNode(CourseLayout&)
 {
-    return fnNode([&layout](){ layout.drawRocks(); });
+    return makeRockBedBoulders(
+        courseRockBedDiscCount(),
+        courseRockBedDiscs());
 }

@@ -54,6 +54,56 @@ std::shared_ptr<SceneNode> makeBoulderCluster(
 }
 
 // ============================================================
+//  makeRockBedBoulders — map rock-bed discs → 3D cylinders
+// ============================================================
+std::shared_ptr<SceneNode> makeRockBedBoulders(int count, const float discs[][3])
+{
+    auto& R = ProtoRegistry::get();
+    auto group = std::make_shared<SceneNode>();
+
+    for(int i = 0; i < count; ++i)
+    {
+        const float x = discs[i][0];
+        const float z = discs[i][1];
+        const float r = discs[i][2];
+
+        ProtoRegistry::ID btype;
+        float baseR;
+        if(r < 0.22f)
+        {
+            btype = ProtoRegistry::BOULDER_SMALL;
+            baseR = 0.28f;
+        }
+        else if(r < 0.32f)
+        {
+            btype = ProtoRegistry::BOULDER_MED;
+            baseR = 0.45f;
+        }
+        else if(i % 5 == 0)
+        {
+            btype = ProtoRegistry::BOULDER_SANDSTONE;
+            baseR = 0.56f;
+        }
+        else
+        {
+            btype = ProtoRegistry::BOULDER_LARGE;
+            baseR = 0.68f;
+        }
+
+        float scale = r / baseR;
+        if(scale < 0.5f)
+            scale = 0.5f;
+
+        const float sxz = scale * seededRand(i * 11 + 1, 0.92f, 1.08f);
+        const float sy  = scale * seededRand(i * 11 + 3, 0.88f, 1.05f);
+        const float rot = seededRand(i * 13 + 5, 0.f, 6.28318530f);
+
+        group->addChild(R.place(btype, x, 0.f, z, sxz, sy, sxz, rot));
+    }
+    return group;
+}
+
+// ============================================================
 //  makeLampPost
 // ============================================================
 std::shared_ptr<SceneNode> makeLampPost(float x, float z)

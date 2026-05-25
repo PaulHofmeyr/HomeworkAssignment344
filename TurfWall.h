@@ -25,6 +25,19 @@ public:
 
     void build() override;
 
+    static TurfWall* createHole01Hole09();
+    static TurfWall* createHole02();
+    static TurfWall* createHole03();
+    static TurfWall* createHole04();
+    static TurfWall* createHole05();
+    static TurfWall* createHole08();
+    static TurfWall* createHole10();
+    static TurfWall* createHole11();
+    static TurfWall* createHole12();
+    static TurfWall* createHole13();
+    static TurfWall* createHole15();
+    static TurfWall* createHole16();
+    static TurfWall* createHole18();
     static TurfWall* createHole07();
 
 private:

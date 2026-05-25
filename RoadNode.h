@@ -2,8 +2,7 @@
 #define ROADNODE_H
 // ============================================================
 //  RoadNode.h
-//  The grey concrete path that winds around the whole course.
-//  Owner: change road colour or add road markings here.
+//  Grey walkway from Path_coords.csv (regenerate via convert_path_coords.py).
 // ============================================================
 #include <memory>
 #include "SceneNode.h"

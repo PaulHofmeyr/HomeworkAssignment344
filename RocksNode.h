@@ -2,8 +2,7 @@
 #define ROCKSNODE_H
 // ============================================================
 //  RocksNode.h
-//  Rock beds (filled polys) and individual rock discs along
-//  the water edges.
+//  Rock beds: 3D boulders at each map rock-bed disc position.
 //  Owner: adjust rock colours / sizes / positions here.
 // ============================================================
 #include <memory>

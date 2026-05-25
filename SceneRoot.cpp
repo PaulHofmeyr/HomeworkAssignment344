@@ -12,6 +12,7 @@
 #include "WindmillNode.h"
 #include "TreeNode.h"
 #include "CourseObjects.h"
+#include "TurfWall.h"
 
 // ── Globals ──────────────────────────────────────────────────
 std::shared_ptr<SceneNode> g_root;
@@ -51,6 +52,8 @@ void buildSceneRoot()
     g_root->addChild( buildHole07Node(*g_layout) );
     g_root->addChild( buildHole08Node(*g_layout) );
     g_root->addChild( buildHole09Node(*g_layout) );
+    // Holes 1 & 9 share four turf walls — one draw (see hole-1-turf-wall.csv)
+    g_root->addChild( shapeNode(TurfWall::createHole01Hole09()) );
     g_root->addChild( buildHole10Node(*g_layout) );
     g_root->addChild( buildHole11Node(*g_layout) );
     g_root->addChild( buildHole12Node(*g_layout) );

@@ -17,6 +17,7 @@
 //  │ Function            │ What it makes                    │
 //  ├─────────────────────┼──────────────────────────────────┤
 //  │ makeBoulderCluster  │ group of 3-5 boulders            │
+//  │ makeRockBedBoulders │ all map rock-bed discs as 3D   │
 //  │ makeLampPost        │ single lamp post + globe         │
 //  │ makeFenceSection    │ posts + rails (hole decor)       │
 //  │ makePerimeterFence  │ posts, rails, pickets on border   │
@@ -43,6 +44,10 @@ std::shared_ptr<SceneNode> makeBoulderCluster(
     float spread = 0.8f,
     int   count  = 4,
     bool  useSandstone = false);
+
+// All rock-bed markers from CourseLayout map data as scaled 3D boulders.
+std::shared_ptr<SceneNode> makeRockBedBoulders(
+    int count, const float discs[][3]);
 
 // ── Lamp post ────────────────────────────────────────────────
 //  Places a single lamp post at (x, 0, z)
