@@ -13,6 +13,7 @@
 #include "TreeNode.h"
 #include "CourseObjects.h"
 #include "TurfWall.h"
+#include "MapObjects.h"
 
 // ── Globals ──────────────────────────────────────────────────
 std::shared_ptr<SceneNode> g_root;
@@ -41,6 +42,7 @@ void buildSceneRoot()
     g_root->addChild( buildRocksNode (*g_layout) );
     g_root->addChild( buildBridgeNode(*g_layout) );
     g_root->addChild( buildHutNode   (*g_layout) );
+    g_root->addChild( buildMapObjectsNode(mapLightRegistry()) );
 
     // 5. All 18 holes — each node owns its flat layers + 3-D objects
     g_root->addChild( buildHole01Node(*g_layout) );
@@ -74,16 +76,6 @@ void buildSceneRoot()
 
     // 8. Perimeter fence — black posts ~2 m apart, map border
     g_root->addChild(makePerimeterFence(-20.f, 20.f, -27.5f, 27.5f, 2.0f));
-
-    // 9. Lamp posts along main path (example positions)
-    g_root->addChild(makeLampPost( 0.f, -25.f));
-    g_root->addChild(makeLampPost( 8.f, -25.f));
-    g_root->addChild(makeLampPost(-8.f, -25.f));
-
-    // 10. Reed beds at pond edges
-    g_root->addChild(makeReedBed( 5.f,  10.f, 8, 0.6f));
-    g_root->addChild(makeReedBed(-3.f,  12.f, 6, 0.5f));
-    g_root->addChild(makeReedBed( 8.f,   5.f, 7, 0.5f));
 }
 
 // ============================================================

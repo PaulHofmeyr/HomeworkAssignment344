@@ -6,6 +6,7 @@
 #include <cmath>
 #include <vector>
 #include "AppState.h"
+#include "LightDefs.h"
 #include "Transformations.h"
 
 #ifndef M_PI
@@ -34,24 +35,6 @@
 //   castShadow – if true, a shadow map is generated for this light
 // ─────────────────────────────────────────────────────────────────────────────
 
-struct Vec3 { float x, y, z; };
-
-struct SpotDef
-{
-    Vec3  pos;
-    Vec3  dir;
-    float innerRad   = 0.261f;   // ~15°
-    float outerRad   = 0.436f;   // ~25°
-    Vec3  ambient    = {0.01f, 0.01f, 0.01f};
-    Vec3  diffuse    = {0.95f, 0.95f, 0.90f};
-    Vec3  specular   = {0.50f, 0.50f, 0.50f};
-    float constant   = 1.0f;
-    float linear     = 0.027f;
-    float quadratic  = 0.0028f;
-    bool  onAtDusk   = true;    // activate at dusk/night
-    bool  castShadow = true;
-};
-
 // ── Uniform helpers ───────────────────────────────────────────────────────────
 static inline void setUniformBool(GLuint p, const std::string& n, bool v)
 { glUniform1i(glGetUniformLocation(p, n.c_str()), v ? 1 : 0); }
@@ -72,13 +55,9 @@ static constexpr int MAX_POINT_CUBE_SHADOWS = 4;   // how many point lights cast
 class Lighting
 {
 public:
-    // ── Point light positions ─────────────────────────────────────────────────
-    static constexpr int NUM_BOLLARDS = 2;
-    Vec3 bollardPos[NUM_BOLLARDS] = {
-        { -1.4f, 0.55f, 2.0f },  // placed bollard position
-        {  3.0f, 0.4f,  0.0f },
-    };
-    Vec3 gazePos = { 0.0f, 2.8f, 0.0f };
+    // Point lights from objects-map.csv (bollards, gazebo lamp, etc.)
+    std::vector<MapPointLight> mapPointLights;
+    int pointCubeLightForSlot[MAX_POINT_CUBE_SHADOWS] = {-1, -1, -1, -1};
 
     // ── Spotlight definitions ─────────────────────────────────────────────────
     // Add new spotlights here — everything else is automatic.
@@ -98,38 +77,12 @@ public:
     // Maps point-light index → which cubemap slot (-1 = no shadow)
     int       pointCubeShadowSlot[MAX_POINT_LIGHTS];
     int       numPointCubeShadows = 0;
-    float     pointShadowFarPlane = 20.0f;  // must match fragment shader
+    float     pointShadowFarPlane = 28.0f;  // must match fragment shader
 
     // ─────────────────────────────────────────────────────────────────────────
     Lighting()
     {
-        // ── Floodlight clusters (4 poles × 3 spots) ───────────────────────────
-        Vec3 floodPos[4] = {
-            { -8.0f, 6.0f,  8.0f },
-            {  8.0f, 6.0f,  8.0f },
-            { -8.0f, 6.0f, -8.0f },
-            {  8.0f, 6.0f, -8.0f },
-        };
-        float spreads[3] = { 0.0f, 0.25f, -0.25f };
-
-        for (int p = 0; p < 4; p++) {
-            for (int s = 0; s < 3; s++) {
-                SpotDef d;
-                d.pos       = floodPos[p];
-                d.dir       = { std::sin(spreads[s]), -1.0f, std::cos(spreads[s]) * 0.05f };
-                d.innerRad  = 0.261f;   // 15°
-                d.outerRad  = 0.436f;   // 25°
-                d.ambient   = {0.01f, 0.01f, 0.01f};
-                d.diffuse   = {0.95f, 0.95f, 0.90f};
-                d.specular  = {0.50f, 0.50f, 0.50f};
-                d.constant  = 1.0f;
-                d.linear    = 0.027f;
-                d.quadratic = 0.0028f;
-                d.onAtDusk  = true;
-                d.castShadow = (s == 1);   // one shadow-casting cone per flood (not all three)
-                spotDefs.push_back(d);
-            }
-        }
+        // Flood spotlights come from objects-map.csv (see applyMapLights).
 
         // ── ADD YOUR OWN SPOTLIGHTS BELOW THIS LINE ───────────────────────────
         // Example (copy, uncomment, and edit):
@@ -184,38 +137,36 @@ public:
         numPointCubeShadows = 0;
         for (int i = 0; i < MAX_POINT_LIGHTS; i++) pointCubeShadowSlot[i] = -1;
 
+        for (int s = 0; s < MAX_POINT_CUBE_SHADOWS; ++s)
+            pointCubeLightForSlot[s] = -1;
+
         int ptIdx = 0;
-        for (int i = 0; i < NUM_BOLLARDS; i++, ptIdx++) {
-            std::string b = "pointLights[" + std::to_string(ptIdx) + "]";
+        const int nPts = (int)mapPointLights.size();
+        ptIdx = nPts < MAX_POINT_LIGHTS ? nPts : MAX_POINT_LIGHTS;
+        for (int i = 0; i < ptIdx; ++i) {
+            const MapPointLight& L = mapPointLights[(size_t)i];
+            std::string b = "pointLights[" + std::to_string(i) + "]";
             glUniform3f(glGetUniformLocation(prog, (b+".position").c_str()),
-                        bollardPos[i].x, bollardPos[i].y, bollardPos[i].z);
-            glUniform3f(glGetUniformLocation(prog, (b+".ambient").c_str()),  0.02f, 0.015f, 0.01f);
-            glUniform3f(glGetUniformLocation(prog, (b+".diffuse").c_str()),  3.0f, 2.5f,  1.8f);
-            glUniform3f(glGetUniformLocation(prog, (b+".specular").c_str()), 1.5f, 1.2f,  0.8f);
-            glUniform1f(glGetUniformLocation(prog, (b+".constant").c_str()),  1.0f);
-            glUniform1f(glGetUniformLocation(prog, (b+".linear").c_str()),    0.70f);
-            glUniform1f(glGetUniformLocation(prog, (b+".quadratic").c_str()), 1.80f);
+                        L.pos.x, L.pos.y, L.pos.z);
+            glUniform3f(glGetUniformLocation(prog, (b+".ambient").c_str()),
+                        L.ambient.x, L.ambient.y, L.ambient.z);
+            glUniform3f(glGetUniformLocation(prog, (b+".diffuse").c_str()),
+                        L.diffuse.x, L.diffuse.y, L.diffuse.z);
+            glUniform3f(glGetUniformLocation(prog, (b+".specular").c_str()),
+                        L.specular.x, L.specular.y, L.specular.z);
+            glUniform1f(glGetUniformLocation(prog, (b+".constant").c_str()),  L.constant);
+            glUniform1f(glGetUniformLocation(prog, (b+".linear").c_str()),    L.linear);
+            glUniform1f(glGetUniformLocation(prog, (b+".quadratic").c_str()), L.quadratic);
             setUniformBool(prog, b+".enabled", fixturesOn);
 
-            // Cube shadow: assign a slot and build 6 face matrices
-            if (numPointCubeShadows < MAX_POINT_CUBE_SHADOWS) {
+            pointCubeShadowSlot[i] = -1;
+            if (fixturesOn && L.castCubeShadow &&
+                numPointCubeShadows < MAX_POINT_CUBE_SHADOWS) {
                 int slot = numPointCubeShadows++;
-                pointCubeShadowSlot[ptIdx] = slot;
-                _buildCubeFaces(bollardPos[i], pointShadowFarPlane, pointCubeLSMs[slot]);
+                pointCubeShadowSlot[i] = slot;
+                pointCubeLightForSlot[slot] = i;
+                _buildCubeFaces(L.pos, pointShadowFarPlane, pointCubeLSMs[slot]);
             }
-        }
-        {
-            std::string b = "pointLights[" + std::to_string(ptIdx) + "]";
-            glUniform3f(glGetUniformLocation(prog, (b+".position").c_str()),
-                        gazePos.x, gazePos.y, gazePos.z);
-            glUniform3f(glGetUniformLocation(prog, (b+".ambient").c_str()),  0.02f, 0.02f, 0.02f);
-            glUniform3f(glGetUniformLocation(prog, (b+".diffuse").c_str()),  0.80f, 0.78f, 0.70f);
-            glUniform3f(glGetUniformLocation(prog, (b+".specular").c_str()), 0.30f, 0.30f, 0.25f);
-            glUniform1f(glGetUniformLocation(prog, (b+".constant").c_str()),  1.0f);
-            glUniform1f(glGetUniformLocation(prog, (b+".linear").c_str()),    0.09f);
-            glUniform1f(glGetUniformLocation(prog, (b+".quadratic").c_str()), 0.032f);
-            setUniformBool(prog, b+".enabled", fixturesOn);
-            ptIdx++;
         }
         setUniform1i(prog, "numPointLights", ptIdx);
 
@@ -233,7 +184,8 @@ public:
         for (int i = 0; i < MAX_SPOTLIGHTS; i++) spotShadowLayer[i] = -1;
 
         for (const SpotDef& d : spotDefs) {
-            _uploadSpot(prog, spIdx, d, fixturesOn ? d.onAtDusk : !d.onAtDusk);
+            bool spotOn = d.onAtDusk ? fixturesOn : true;
+            _uploadSpot(prog, spIdx, d, spotOn);
             if (d.castShadow && numSpotShadows < MAX_SPOT_SHADOWS) {
                 spotShadowLayer[spIdx] = numSpotShadows;
                 spotLSMs[numSpotShadows++] = _buildSpotLSM(d.pos, d.dir, d.outerRad);

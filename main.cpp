@@ -10,6 +10,8 @@
 #include "Drone.h"
 #include "PostProcess.h"
 #include "Lighting.h"
+#include "LightDefs.h"
+#include "MapObjects.h"
 #include "SceneRoot.h"
 #include "Skybox.h"
 
@@ -135,14 +137,15 @@ int main()
     // ── Build full scene graph ────────────────────────────────
     buildSceneRoot();
 
+    Lighting lighting;
+    applyMapLights(lighting, mapLightRegistry());
+
     // ── Drone ─────────────────────────────────────────────────
     Drone drone;
     drone.px  =  0.0f;
     drone.py  = 40.0f;
     drone.pz  = 55.0f;
     drone.yaw =  0.0f;
-
-    Lighting lighting;
 
     float orthoH = 32.0f;
     float orthoW = orthoH * ((float)app.windowWidth / app.windowHeight);
@@ -235,9 +238,10 @@ int main()
                 std::string uname = "shadowMatrices[" + std::to_string(f) + "]";
                 setMat4(cubeDepthShader, uname.c_str(), lighting.pointCubeLSMs[ci].m[f]);
             }
-            float lx = lighting.bollardPos[ci].x;
-            float ly = lighting.bollardPos[ci].y;
-            float lz = lighting.bollardPos[ci].z;
+            int li = lighting.pointCubeLightForSlot[ci];
+            if (li < 0 || li >= (int)lighting.mapPointLights.size()) continue;
+            const MapPointLight& lp = lighting.mapPointLights[(size_t)li];
+            float lx = lp.pos.x, ly = lp.pos.y, lz = lp.pos.z;
             glUniform3f(glGetUniformLocation(cubeDepthShader, "lightPos"), lx, ly, lz);
             glUniform1f(glGetUniformLocation(cubeDepthShader, "farPlane"), lighting.pointShadowFarPlane);
 

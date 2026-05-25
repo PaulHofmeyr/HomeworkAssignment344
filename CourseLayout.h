@@ -53,6 +53,7 @@ public:
     void drawGreenbed(int i) const { if(i>=0&&i<18) m_greenbed[i].draw(); }
     void drawGreen   (int i) const { if(i>=0&&i<18) m_green[i].draw();    }
     void drawFlag    (int i) const { if(i>=0&&i<18) m_flag[i].draw();     }
+    void drawBunkers (int i) const { if(i>=0&&i<18) m_bunkers[i].draw();  }
 
     // Batched convenience — draws all 18 at once (used by SceneRoot if needed)
     void drawAllGreenbeds() const { for(int i=0;i<18;++i) m_greenbed[i].draw(); }
@@ -71,6 +72,7 @@ private:
     BatchedFlat m_greenbed[18];   // one per hole: sand + ring + centre
     BatchedFlat m_green[18];      // one per hole: putting green
     BatchedFlat m_flag[18];       // one per hole: flag disc
+    BatchedFlat m_bunkers[18];    // sand traps per hole
     FlatPoly    m_bridge[2];
     FlatPoly    m_hut;
     bool        m_built = false;

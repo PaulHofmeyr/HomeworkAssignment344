@@ -6,11 +6,11 @@ BREW_PREFIX := $(shell brew --prefix 2>/dev/null || echo /usr/local)
 CXXFLAGS += -I$(BREW_PREFIX)/include
 LDFLAGS  = -L$(BREW_PREFIX)/lib
 
-LIBS     = -lGL -lGLEW -lglfw -lm
+LIBS     = -lGL -lGLEW -lglfw -lassimp -lm
 
-# If pkg-config is available, prefer its flags for glfw/glew
-CXXFLAGS += $(shell pkg-config --cflags glew glfw3 2>/dev/null)
-LIBS     += $(shell pkg-config --libs   glew glfw3 2>/dev/null)
+# If pkg-config is available, prefer its flags for glfw/glew/assimp
+CXXFLAGS += $(shell pkg-config --cflags glew glfw3 assimp 2>/dev/null)
+LIBS     += $(shell pkg-config --libs   glew glfw3 assimp 2>/dev/null)
 
 SRCS     = main.cpp \
            shader.cpp \
@@ -22,8 +22,8 @@ SRCS     = main.cpp \
            TriangularPrism.cpp \
            TurfWall.cpp \
            PerimeterFenceMesh.cpp \
-           Bollard.cpp \
-           Scene.cpp \
+           GlbMesh.cpp \
+           MapObjects.cpp \
            CourseLayout.cpp \
            Prototype.cpp \
            CourseObjects.cpp \
@@ -62,6 +62,7 @@ all: $(TARGET)
 
 mac: CXX := clang++
 mac: LIBS := -lGLEW -lglfw -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -framework CoreFoundation
+mac: LIBS += $(shell pkg-config --libs assimp 2>/dev/null || echo -lassimp)
 mac: $(TARGET)
 
 $(TARGET): $(OBJS)

@@ -7,7 +7,6 @@
 // ============================================================
 //  Embedded coordinate data
 // ============================================================
-#pragma once
 // AUTO-GENERATED CourseLayout_data.h (v7 - correct scales + fast triangulation)
 // Scale: 1 unit=1m | X:[-20,20] Z:[-27.5,27.5]
 
@@ -6810,6 +6809,7 @@ static void buildShrunk(FlatPoly &poly,const float pts[][2],int n,
 // ============================================================
 //  CourseLayout
 // ============================================================
+
 CourseLayout::CourseLayout(){}
 CourseLayout::~CourseLayout(){cleanup();}
 
@@ -6866,6 +6866,242 @@ static std::vector<float> discVerts(float cx,float cz,float radius,float r,float
     }
     return buf;
 }
+
+// BEGIN BUNKER_DATA (auto-generated — do not edit by hand)
+// Source: bunkers.csv
+
+static const float bunker_h01_p0[][2] = {
+    {  -5.006f, -20.991f},
+    {  -4.029f, -20.874f},
+    {  -2.808f, -21.109f},
+    {  -1.685f, -21.050f},
+    {  -0.513f, -20.933f},
+    {  -0.171f, -21.578f},
+    {  -0.952f, -21.930f},
+    {  -1.783f, -22.047f},
+    {  -3.248f, -22.047f},
+    {  -4.176f, -21.930f},
+    {  -4.908f, -21.871f},
+};
+static const int bunker_h01_p0Count = 11;
+
+static const float bunker_h03_p0[][2] = {
+    {  17.949f, -23.396f},
+    {  18.584f, -22.399f},
+    {  18.584f, -21.636f},
+};
+static const int bunker_h03_p0Count = 3;
+
+static const float bunker_h04_p0[][2] = {
+    {  11.013f,  -8.150f},
+    {  11.453f,  -8.209f},
+    {  11.697f,  -8.795f},
+    {  11.795f,  -9.323f},
+    {  11.502f,  -9.558f},
+    {  11.111f,  -9.792f},
+    {  10.818f,  -9.323f},
+    {  10.623f,  -8.619f},
+};
+static const int bunker_h04_p0Count = 8;
+
+static const float bunker_h05_p0[][2] = {
+    {  16.532f,   0.762f},
+    {  16.190f,   1.525f},
+    {  16.190f,   2.287f},
+    {  16.532f,   2.814f},
+    {  17.216f,   3.108f},
+    {  17.607f,   2.580f},
+    {  17.021f,   2.287f},
+    {  16.679f,   1.759f},
+};
+static const int bunker_h05_p0Count = 8;
+
+static const float bunker_h08_p0[][2] = {
+    {   0.464f, -12.020f},
+    {   0.806f, -12.313f},
+    {   1.148f, -12.313f},
+    {   1.441f, -12.079f},
+    {   1.392f, -11.668f},
+    {   1.050f, -11.610f},
+    {   0.806f, -11.786f},
+};
+static const int bunker_h08_p0Count = 7;
+
+static const float bunker_h08_p1[][2] = {
+    {   2.857f, -12.548f},
+    {   3.443f, -12.138f},
+    {   3.736f, -11.844f},
+    {   3.248f, -11.610f},
+    {   2.857f, -11.786f},
+};
+static const int bunker_h08_p1Count = 5;
+
+static const float bunker_h11_p0[][2] = {
+    {  -4.762f,   8.854f},
+    {  -3.834f,   8.854f},
+    {  -3.980f,   8.209f},
+    {  -4.371f,   7.799f},
+    {  -4.908f,   7.916f},
+    {  -5.104f,   8.443f},
+};
+static const int bunker_h11_p0Count = 6;
+
+static const float bunker_h12_p0[][2] = {
+    {   1.538f,  21.930f},
+    {   1.880f,  21.930f},
+    {   2.418f,  21.402f},
+    {   2.125f,  21.167f},
+    {   1.197f,  21.343f},
+};
+static const int bunker_h12_p0Count = 5;
+
+static const float bunker_h14_p0[][2] = {
+    {  -6.129f,  19.408f},
+    {  -5.739f,  20.288f},
+    {  -5.055f,  20.581f},
+    {  -4.518f,  20.581f},
+    {  -5.104f,  19.877f},
+    {  -5.641f,  19.467f},
+};
+static const int bunker_h14_p0Count = 6;
+
+static const float bunker_h15_p0[][2] = {
+    { -14.823f,  19.174f},
+    { -15.800f,  18.881f},
+    { -16.484f,  19.174f},
+    { -15.751f,  20.053f},
+};
+static const int bunker_h15_p0Count = 4;
+
+static const float bunker_h15_p1[][2] = {
+    { -17.021f,  18.587f},
+    { -17.265f,  17.591f},
+    { -16.581f,  16.946f},
+    { -16.777f,  17.708f},
+};
+static const int bunker_h15_p1Count = 4;
+
+static const float bunker_h16_p0[][2] = {
+    { -15.116f,   7.271f},
+    { -14.481f,   7.212f},
+    { -13.944f,   6.743f},
+    { -14.481f,   6.333f},
+};
+static const int bunker_h16_p0Count = 4;
+
+static const float bunker_h17_p0[][2] = {
+    { -16.777f,   5.805f},
+    { -16.972f,   5.277f},
+    { -17.021f,   4.398f},
+    { -16.484f,   3.753f},
+    { -16.190f,   4.339f},
+    { -16.484f,   5.043f},
+};
+static const int bunker_h17_p0Count = 6;
+
+static const float bunker_h18_p0[][2] = {
+    { -15.751f,  -7.154f},
+    { -16.044f,  -7.740f},
+    { -15.995f,  -8.854f},
+    { -15.507f,  -9.323f},
+    { -14.823f,  -9.382f},
+    { -15.116f,  -8.619f},
+    { -15.556f,  -7.623f},
+};
+static const int bunker_h18_p0Count = 7;
+
+static void uploadHoleBunkers(BatchedFlat out[18])
+{
+    constexpr float Y_BUNKER = 0.0065f;
+    constexpr float COL_BUNKER_R = 0.96f, COL_BUNKER_G = 0.90f, COL_BUNKER_B = 0.72f;
+    { // hole 01
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h01_p0, bunker_h01_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[0].upload(buf);
+    }
+    { // hole 02
+        std::vector<float> buf;
+        out[1].upload(buf);
+    }
+    { // hole 03
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h03_p0, bunker_h03_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[2].upload(buf);
+    }
+    { // hole 04
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h04_p0, bunker_h04_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[3].upload(buf);
+    }
+    { // hole 05
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h05_p0, bunker_h05_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[4].upload(buf);
+    }
+    { // hole 06
+        std::vector<float> buf;
+        out[5].upload(buf);
+    }
+    { // hole 07
+        std::vector<float> buf;
+        out[6].upload(buf);
+    }
+    { // hole 08
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h08_p0, bunker_h08_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        { auto v = polyVerts(bunker_h08_p1, bunker_h08_p1Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[7].upload(buf);
+    }
+    { // hole 09
+        std::vector<float> buf;
+        out[8].upload(buf);
+    }
+    { // hole 10
+        std::vector<float> buf;
+        out[9].upload(buf);
+    }
+    { // hole 11
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h11_p0, bunker_h11_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[10].upload(buf);
+    }
+    { // hole 12
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h12_p0, bunker_h12_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[11].upload(buf);
+    }
+    { // hole 13
+        std::vector<float> buf;
+        out[12].upload(buf);
+    }
+    { // hole 14
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h14_p0, bunker_h14_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[13].upload(buf);
+    }
+    { // hole 15
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h15_p0, bunker_h15_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        { auto v = polyVerts(bunker_h15_p1, bunker_h15_p1Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[14].upload(buf);
+    }
+    { // hole 16
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h16_p0, bunker_h16_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[15].upload(buf);
+    }
+    { // hole 17
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h17_p0, bunker_h17_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[16].upload(buf);
+    }
+    { // hole 18
+        std::vector<float> buf;
+        { auto v = polyVerts(bunker_h18_p0, bunker_h18_p0Count, COL_BUNKER_R, COL_BUNKER_G, COL_BUNKER_B, Y_BUNKER); buf.insert(buf.end(), v.begin(), v.end()); }
+        out[17].upload(buf);
+    }
+}
+// END BUNKER_DATA
 
 void CourseLayout::build()
 {
@@ -6967,6 +7203,8 @@ void CourseLayout::build()
         auto d=discVerts(holeFlags[i][0],holeFlags[i][1],0.20f,COL_FLAG,Y_FLAG,8);
         m_flag[i].upload(d);
     }
+
+    uploadHoleBunkers(m_bunkers);
 }
 
 void CourseLayout::draw() const{
@@ -6986,6 +7224,7 @@ void CourseLayout::cleanup(){
     for(int i=0;i<18;++i) m_greenbed[i].cleanup();
     for(int i=0;i<18;++i) m_green[i].cleanup();
     for(int i=0;i<18;++i) m_flag[i].cleanup();
+    for(int i=0;i<18;++i) m_bunkers[i].cleanup();
     m_bridge[0].cleanup();m_bridge[1].cleanup();
     m_hut.cleanup();
     m_built=false;

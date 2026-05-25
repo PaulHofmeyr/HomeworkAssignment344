@@ -1,33 +1,42 @@
 #ifndef BOLLARD_H
 #define BOLLARD_H
 
-#include "Shape.h"
+#include "GlbMesh.h"
+#include "LightDefs.h"
 
-// Bollard: a short cylinder body topped with a hemispherical domed cap.
-// The dome is approximated by a stack of shrinking cylinder rings.
-// Typical usage:
-//   Bollard proto(0,0,0, COL);   proto.build();          // prototype
-//   Bollard *b = new Bollard(0,0,0, COL);                // clone constructor
-//   b->cloneBuffers(proto);                               // share GPU data
-//   // then place b with a translation transform in the scene graph
-
-class Bollard : public Shape
+// ---------------------------------------------------------------------------
+// Bollard – wraps Bollard.glb and exposes its lamp-head position as a
+// world-space Vec3 so Lighting can place a point light there.
+//
+// Raw GLB: origin at top of mesh (yMin=-7.428, yMax=0.16).
+// At scale=0.105 total height ~0.80 m.  The lamp head is at yMax=0.16
+// in model space → world Y = baseY + 0.16 * scale.
+// ---------------------------------------------------------------------------
+class Bollard : public GlbMesh
 {
-private:
-    float cx, cy, cz;    // base-centre world position
-    int   sectors;
-
-    // Fixed proportions (can be tweaked here)
-    static constexpr float BODY_RADIUS = 0.06f;
-    static constexpr float BODY_HEIGHT = 0.55f;
-    static constexpr float DOME_STACKS = 8;
-
 public:
-    Bollard(float cx, float cy, float cz,
-            float r, float g, float b,
-            int sectors = 16);
+    static constexpr float LAMP_MODEL_Y = 0.16f;  // raw GLB yMax
 
-    void build() override;
+    explicit Bollard(float x = 0.f, float y = 0.f, float z = 0.f,
+                     float scale  = 1.f,
+                     float yawRad = 0.f,
+                     const std::string& path = "assets/Bollard.glb")
+        : GlbMesh(path),
+          worldX_(x), worldY_(y), worldZ_(z), scale_(scale)
+    {
+        Matrix<4,4> t = makeTranslation3D(x, y, z)
+                      * makeRotationY(yawRad)
+                      * makeScale3D(scale, scale, scale);
+        setTransform(t);
+    }
+
+    Vec3 getLightPos() const
+    {
+        return { worldX_, worldY_ + LAMP_MODEL_Y * scale_, worldZ_ };
+    }
+
+private:
+    float worldX_, worldY_, worldZ_, scale_;
 };
 
 #endif // BOLLARD_H
