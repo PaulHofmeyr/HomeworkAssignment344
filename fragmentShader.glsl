@@ -89,6 +89,32 @@ uniform int         numPointCubeShadows;
 uniform float       pointShadowFarPlane;
 uniform bool        usePointCubeShadows;
 
+// ── Grass texture ─────────────────────────────────────────────────────────────
+// Texture unit 7 — tiled over green surfaces using world-space XZ coordinates.
+uniform sampler2D grassTex;      // tex unit 7
+uniform bool      useGrassTex;
+
+// ── Limestone texture (rocks / boulders) ──────────────────────────────────────
+// Texture unit 8 — warm limestone mapped onto rocky/brownish surfaces.
+uniform sampler2D limestoneTex;  // tex unit 8
+uniform bool      useLimestoneTex;
+
+// ── Concrete texture (paths / road) ───────────────────────────────────────────
+// Texture unit 9 — grey concrete mapped onto the course walkway/road.
+uniform sampler2D concreteTex;   // tex unit 9
+uniform bool      useConcreteTex;
+
+// ── Water texture ─────────────────────────────────────────────────────────────
+// Texture unit 10 — animated scrolling texture on water surfaces.
+uniform sampler2D waterTex;      // tex unit 10
+uniform bool      useWaterTex;
+uniform float     waterTime;     // glfwGetTime() — for UV animation
+
+// ── Shrub texture ─────────────────────────────────────────────────────────────
+// Texture unit 11 — leafy texture on shrubs, ornamental grass and tree canopy.
+uniform sampler2D shrubTex;      // tex unit 11
+uniform bool      useShrubTex;
+
 // ─────────────────────────────────────────────────────────────────────────────
 float calcSunShadow(vec4 fragPosLS, vec3 normal, vec3 lightDir)
 {
@@ -233,6 +259,99 @@ void main()
     vec3 norm     = normalize(fragNormal);
     vec3 viewDir  = normalize(viewPos - fragPos);
     vec3 baseDiff = useMaterialOverride ? material.diffuse : fragColour;
+
+    // ── Grass texture on green surfaces ───────────────────────────────────────
+    // Only bright putting greens / fairways (g > 0.62) get the grass texture.
+    // Turf walls, shrubs, leaves use the shrub texture instead (see below).
+    if (useGrassTex && !useMaterialOverride) {
+        if (fragColour.g > 0.62 && fragColour.g > fragColour.r + 0.08) {
+            vec2 grassUV     = fragPos.xz * 0.4;
+            vec4 grassSample = texture(grassTex, grassUV);
+            vec3 tinted      = grassSample.rgb * (fragColour * 2.0);
+            baseDiff = mix(baseDiff, tinted, 0.72);
+        }
+    }
+
+    // ── Limestone / rock texture on boulders and rock beds ────────────────────
+    //   C_GRANITE_D = (0.38, 0.34, 0.30)  C_GRANITE_L = (0.55, 0.52, 0.48)
+    //   C_SANDSTONE = (0.72, 0.58, 0.38)  COL_ROCK    = (0.40, 0.36, 0.30)
+    //   Detection: warm brownish tone — red is highest, not too saturated
+    if (useLimestoneTex) {
+        float cr = fragColour.r, cg = fragColour.g, cb = fragColour.b;
+        bool isRock = (cr > cb + 0.04)           // red > blue (warm tone)
+                   && (cr > 0.25) && (cr < 0.80) // mid brightness
+                   && (cg < cr + 0.02)            // green not dominant
+                   && (cb > 0.10);               // not pure black
+        if (isRock) {
+            vec2 rockUV   = fragPos.xz * 0.4;
+            vec3 lsSample = texture(limestoneTex, rockUV).rgb;
+            // Blend texture directly — no dark tint multiplier
+            baseDiff = mix(baseDiff, lsSample, 0.75);
+        }
+    }
+
+    // ── Concrete texture on paths / road ──────────────────────────────────────
+    // COL_ROAD = (0.55, 0.55, 0.55) — neutral grey, all channels nearly equal.
+    if (useConcreteTex && !useMaterialOverride) {
+        float cr = fragColour.r, cg = fragColour.g, cb = fragColour.b;
+        float maxDiff = max(abs(cr - cg), max(abs(cr - cb), abs(cg - cb)));
+        bool isRoad = (maxDiff < 0.06)                  // very neutral grey
+                   && (cr > 0.45) && (cr < 0.72);       // mid-grey brightness band
+        if (isRoad) {
+            vec2 concreteUV = fragPos.xz * 0.35;        // ~2.8-unit tile
+            vec4 conSample  = texture(concreteTex, concreteUV);
+            baseDiff = mix(baseDiff, conSample.rgb, 0.70);
+        }
+    }
+
+    // ── Water texture on water surfaces ───────────────────────────────────────
+    // COL_WATER = (0.15, 0.55, 0.85) — strongly blue-dominant.
+    // Two scrolling layers at different speeds/angles create animated rippling.
+    if (useWaterTex && !useMaterialOverride) {
+        float cr = fragColour.r, cg = fragColour.g, cb = fragColour.b;
+        bool isWater = (cb > cg + 0.15) && (cb > cr + 0.35) && (cb > 0.55);
+        if (isWater) {
+            // Layer 1: slow diagonal drift
+            vec2 uv1 = fragPos.xz * 0.18 + vec2(waterTime * 0.018,  waterTime * 0.012);
+            // Layer 2: faster counter-drift for depth
+            vec2 uv2 = fragPos.xz * 0.22 + vec2(-waterTime * 0.010, waterTime * 0.022);
+            vec3 tex1 = texture(waterTex, uv1).rgb;
+            vec3 tex2 = texture(waterTex, uv2).rgb;
+            vec3 texBlend = (tex1 + tex2) * 0.5;
+            // Blend: keep water's blue tint dominant, texture adds surface detail
+            baseDiff = mix(baseDiff, texBlend, 0.55);
+        }
+    }
+
+    // ── Shrub texture on turf walls, shrubs, ornamental grass and tree canopy ──
+    //   TurfWall   = (0.12, 0.50, 0.14)  — the green walls
+    //   C_SHRUB    = (0.22, 0.52, 0.18)  — shrub objects
+    //   C_GRASS    = (0.38, 0.62, 0.22)  — ornamental grass objects
+    //   C_LEAF     = (0.18, 0.52, 0.18)  — tree canopy
+    //   Detection: mid-range green (0.45–0.63), clearly green-dominant, not too red
+    if (useShrubTex) {
+        float cr = fragColour.r, cg = fragColour.g, cb = fragColour.b;
+        bool isShrub = (cg > cr + 0.20)   // strongly green-dominant
+                    && (cg > cb + 0.20)    // more green than blue
+                    && (cg < 0.63)         // not as bright as fairway greens
+                    && (cr < 0.45);        // not warm/yellow tones
+        if (isShrub) {
+            // Triplanar UV: blend XZ (top), XY (front/back), ZY (left/right)
+            // based on the surface normal so both flat tops and vertical walls
+            // tile the texture correctly without stretching.
+            float scale = 0.6;
+            vec3 blendW = abs(norm);
+            blendW = pow(blendW, vec3(4.0));          // sharpen blend seams
+            blendW /= (blendW.x + blendW.y + blendW.z + 0.001);
+
+            vec3 sXZ = texture(shrubTex, fragPos.xz * scale).rgb; // top face
+            vec3 sXY = texture(shrubTex, fragPos.xy * scale).rgb; // front/back
+            vec3 sZY = texture(shrubTex, fragPos.zy * scale).rgb; // left/right
+
+            vec3 shrubSamp = sXZ * blendW.y + sXY * blendW.z + sZY * blendW.x;
+            baseDiff = mix(baseDiff, shrubSamp, 0.72);
+        }
+    }
 
     vec3 result = vec3(0.0);
 
