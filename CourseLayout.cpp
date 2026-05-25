@@ -7214,7 +7214,6 @@ void CourseLayout::draw() const{
     for(int i=0;i<18;++i) m_greenbed[i].draw();
     for(int i=0;i<18;++i) m_green[i].draw();
     m_bridge[0].draw();m_bridge[1].draw();
-    m_hut.draw();
     for(int i=0;i<18;++i) m_flag[i].draw();
 }
 

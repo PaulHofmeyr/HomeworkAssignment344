@@ -60,6 +60,9 @@ public:
     void setTransform(const Matrix<4,4>& m) { transform_ = m; }
     const Matrix<4,4>& getTransform() const { return transform_; }
 
+    // Request wood texture overlay for this mesh
+    void setApplyWood(bool v) { applyWood_ = v; }
+
     // Draw helpers
     // shaderID must already be bound (glUseProgram called by caller).
     // These upload "modelMatrix" and draw all sub-meshes.
@@ -73,7 +76,8 @@ public:
     void drawDepth(GLuint depthShaderID) const;
 
 private:
-    bool          loaded_ = false;
+    bool          loaded_     = false;
+    bool          applyWood_ = false;
     Matrix<4,4>   transform_;
     std::vector<GpuMesh> meshes_;
 

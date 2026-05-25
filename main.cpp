@@ -244,6 +244,27 @@ int main()
         }
     }
 
+    // ── Wood texture (tex unit 12) ────────────────────────────
+    GLuint woodTexID = 0;
+    {
+        int tw, th, tch;
+        stbi_set_flip_vertically_on_load(true);
+        unsigned char* tdata = stbi_load("Wood.jpg", &tw, &th, &tch, 0);
+        if (!tdata) { std::cerr << "WARNING: could not load Wood.jpg\n"; }
+        else {
+            glGenTextures(1, &woodTexID);
+            glBindTexture(GL_TEXTURE_2D, woodTexID);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            GLenum fmt = (tch == 4) ? GL_RGBA : GL_RGB;
+            glTexImage2D(GL_TEXTURE_2D, 0, fmt, tw, th, 0, fmt, GL_UNSIGNED_BYTE, tdata);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            stbi_image_free(tdata);
+        }
+    }
+
     // ── Build full scene graph ────────────────────────────────
     buildSceneRoot();
 
@@ -449,6 +470,12 @@ int main()
         glUniform1i(glGetUniformLocation(app.sceneShaderID, "shrubTex"),    11);
         glUniform1i(glGetUniformLocation(app.sceneShaderID, "useShrubTex"), shrubTexID != 0 ? 1 : 0);
 
+        // Wood texture → texture unit 12
+        glActiveTexture(GL_TEXTURE12);
+        glBindTexture(GL_TEXTURE_2D, woodTexID);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "woodTex"),    12);
+        glUniform1i(glGetUniformLocation(app.sceneShaderID, "useWoodTex"), woodTexID != 0 ? 1 : 0);
+
         // ── Single call draws the entire scene graph ──────────
         drawSceneRoot(app.sceneShaderID, app.wireframe);
 
@@ -473,6 +500,7 @@ int main()
     if (concreteTexID)  glDeleteTextures(1, &concreteTexID);
     if (waterTexID)     glDeleteTextures(1, &waterTexID);
     if (shrubTexID)     glDeleteTextures(1, &shrubTexID);
+    if (woodTexID)      glDeleteTextures(1, &woodTexID);
     // Skybox cleanup
     skybox.cleanup();
     glDeleteProgram(skyboxShader);

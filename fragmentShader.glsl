@@ -110,10 +110,21 @@ uniform sampler2D waterTex;      // tex unit 10
 uniform bool      useWaterTex;
 uniform float     waterTime;     // glfwGetTime() — for UV animation
 
+// Set to true when drawing GLB mesh objects so procedural texture detection
+// (water, grass, etc.) is skipped — their colours are material-defined, not map colours.
+uniform bool isGlbMesh;
+
 // ── Shrub texture ─────────────────────────────────────────────────────────────
 // Texture unit 11 — leafy texture on shrubs, ornamental grass and tree canopy.
 uniform sampler2D shrubTex;      // tex unit 11
 uniform bool      useShrubTex;
+
+// ── Wood texture ──────────────────────────────────────────────────────────────
+// Texture unit 12 — wood grain applied to crates and the gazebo/hut.
+uniform sampler2D woodTex;       // tex unit 12
+uniform bool      useWoodTex;
+// Set per-draw-call by GlbMesh::draw() for crate/gazebo instances.
+uniform bool      applyWoodToGlb;
 
 // ─────────────────────────────────────────────────────────────────────────────
 float calcSunShadow(vec4 fragPosLS, vec3 normal, vec3 lightDir)
@@ -283,10 +294,9 @@ void main()
                    && (cg < cr + 0.02)            // green not dominant
                    && (cb > 0.10);               // not pure black
         if (isRock) {
-            vec2 rockUV   = fragPos.xz * 0.4;
+            vec2 rockUV   = fragPos.xz * 0.55;
             vec3 lsSample = texture(limestoneTex, rockUV).rgb;
-            // Blend texture directly — no dark tint multiplier
-            baseDiff = mix(baseDiff, lsSample, 0.75);
+            baseDiff = mix(baseDiff, lsSample, 0.88);
         }
     }
 
@@ -307,7 +317,7 @@ void main()
     // ── Water texture on water surfaces ───────────────────────────────────────
     // COL_WATER = (0.15, 0.55, 0.85) — strongly blue-dominant.
     // Two scrolling layers at different speeds/angles create animated rippling.
-    if (useWaterTex && !useMaterialOverride) {
+    if (useWaterTex && !useMaterialOverride && !isGlbMesh) {
         float cr = fragColour.r, cg = fragColour.g, cb = fragColour.b;
         bool isWater = (cb > cg + 0.15) && (cb > cr + 0.35) && (cb > 0.55);
         if (isWater) {
@@ -351,6 +361,19 @@ void main()
             vec3 shrubSamp = sXZ * blendW.y + sXY * blendW.z + sZY * blendW.x;
             baseDiff = mix(baseDiff, shrubSamp, 0.72);
         }
+    }
+
+    // ── Wood texture on crates and gazebo/hut ─────────────────────────────────
+    if (useWoodTex && applyWoodToGlb && isGlbMesh) {
+        float scale = 0.5;
+        vec3 blendW = abs(norm);
+        blendW = pow(blendW, vec3(4.0));
+        blendW /= (blendW.x + blendW.y + blendW.z + 0.001);
+        vec3 wXZ = texture(woodTex, fragPos.xz * scale).rgb;
+        vec3 wXY = texture(woodTex, fragPos.xy * scale).rgb;
+        vec3 wZY = texture(woodTex, fragPos.zy * scale).rgb;
+        vec3 woodSamp = wXZ * blendW.y + wXY * blendW.z + wZY * blendW.x;
+        baseDiff = mix(baseDiff, woodSamp, 0.82);
     }
 
     vec3 result = vec3(0.0);

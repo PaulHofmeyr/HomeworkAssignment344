@@ -187,7 +187,13 @@ void GlbMesh::draw(GLuint shaderID, bool wireframe) const
 {
     if (!loaded_) return;
     uploadModelMatrix(shaderID);
+    GLint isGlbLoc  = glGetUniformLocation(shaderID, "isGlbMesh");
+    GLint woodLoc   = glGetUniformLocation(shaderID, "applyWoodToGlb");
+    if (isGlbLoc >= 0) glUniform1i(isGlbLoc, 1);
+    if (woodLoc  >= 0) glUniform1i(woodLoc,  applyWood_ ? 1 : 0);
     drawMeshes(wireframe);
+    if (isGlbLoc >= 0) glUniform1i(isGlbLoc, 0);
+    if (woodLoc  >= 0) glUniform1i(woodLoc,  0);
 }
 
 void GlbMesh::drawFilled(GLuint shaderID) const   { draw(shaderID, false); }

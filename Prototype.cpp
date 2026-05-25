@@ -38,11 +38,11 @@
 // ============================================================
 void ProtoRegistry::build()
 {
-    // ── BOULDER_SMALL  — base on y=0, cy = half height ───────
+    // ── BOULDER_SMALL  — squat angular rock ──────────────────
     {
-        constexpr float h = 0.34f;
+        constexpr float h = 0.22f;
         auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
-                               0.28f, h, 10,
+                               0.34f, h, 6,
                                C_GRANITE_D);
         s->build();
         m_masters[BOULDER_SMALL] = s;
@@ -50,9 +50,9 @@ void ProtoRegistry::build()
 
     // ── BOULDER_MED ──────────────────────────────────────────
     {
-        constexpr float h = 0.78f;
+        constexpr float h = 0.42f;
         auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
-                               0.45f, h, 10,
+                               0.54f, h, 7,
                                C_GRANITE_D);
         s->build();
         m_masters[BOULDER_MED] = s;
@@ -60,9 +60,9 @@ void ProtoRegistry::build()
 
     // ── BOULDER_LARGE ────────────────────────────────────────
     {
-        constexpr float h = 1.18f;
+        constexpr float h = 0.62f;
         auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
-                               0.68f, h, 12,
+                               0.78f, h, 8,
                                C_GRANITE_L);
         s->build();
         m_masters[BOULDER_LARGE] = s;
@@ -70,9 +70,9 @@ void ProtoRegistry::build()
 
     // ── BOULDER_SANDSTONE ────────────────────────────────────
     {
-        constexpr float h = 0.98f;
+        constexpr float h = 0.52f;
         auto* s = new Cylinder(0.f, h * 0.5f, 0.f,
-                               0.56f, h, 10,
+                               0.64f, h, 7,
                                C_SANDSTONE);
         s->build();
         m_masters[BOULDER_SANDSTONE] = s;

@@ -41,7 +41,6 @@ void buildSceneRoot()
     g_root->addChild( buildWaterNode (*g_layout) );
     g_root->addChild( buildRocksNode (*g_layout) );
     g_root->addChild( buildBridgeNode(*g_layout) );
-    g_root->addChild( buildHutNode   (*g_layout) );
     g_root->addChild( buildMapObjectsNode(mapLightRegistry()) );
 
     // 5. All 18 holes — each node owns its flat layers + 3-D objects

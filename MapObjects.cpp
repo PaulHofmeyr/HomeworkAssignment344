@@ -26,19 +26,22 @@ namespace {
 constexpr const char* MAP_CSV = "objects-map.csv";
 
 // GLB horizontal size at scale=1 (model units ≈ metres) — used to fit inside map clicks.
+// Values match the actual raw GLB max-XZ extents measured from the files.
 constexpr float GAZEBO_MODEL_XZ  = 26.0f;
 constexpr float WAVE_MODEL_XZ    = 10.0f;
 constexpr float BRIDGE_MODEL_XZ  = 4.0f;
-constexpr float CRATE_MODEL_XZ   = 1.2f;
+constexpr float CRATE_MODEL_XZ   = 5.5f;    // raw X=3.87; inflate to shrink placed scale to ~0.8m
 constexpr float UMBRELLA_SCALE   = 0.35f;
-// GLB origins sit below ground — lift base so bottoms rest on turf (y=0).
-constexpr float CRATE_Y_LIFT_PER_SCALE  = 0.72f;
-constexpr float UMBRELLA_Y_LIFT         = 0.55f;
+// Lift each GLB so its raw yMin sits on turf (y=0).
+constexpr float CRATE_Y_LIFT_PER_SCALE  = 1.0f;    // raw crate yMin = -1.0
+constexpr float UMBRELLA_Y_LIFT         = 0.35f;    // = UMBRELLA_SCALE * abs(yMin=1.0)
+constexpr float WAVE_Y_LIFT             = 0.6f;
 constexpr float FIT_MARGIN       = 0.88f;
 constexpr float FIT_MARGIN_BRIDGE = 0.95f;
-constexpr float SCALE_BOLLARD    = 0.07f;
+constexpr float SCALE_BOLLARD    = 0.105f;
+constexpr float BOLLARD_Y_LIFT   = 7.428f;  // raw GLB yMin — lifts base to ground
 constexpr float SCALE_FLOODLIGHT = 0.85f;
-constexpr float Y_FLOODLIGHT     = 1.0f;
+constexpr float Y_FLOODLIGHT     = 0.0f;    // raw FloodLight yMin ≈ 0 — base already at origin
 constexpr float MAX_PLACEMENT_SCALE = 1.2f;
 
 struct PxPt { int idx; int x; int y; };
@@ -198,8 +201,11 @@ std::shared_ptr<SceneNode> buildMapObjectsNode(MapLightRegistry& lights)
             std::vector<PxPt> quad(pts.begin() + (int)i, pts.begin() + (int)i + 4);
             Placement pl = placementFitFootprint(toWorldPts(quad), 0.f, CRATE_MODEL_XZ);
             pl.y += pl.scale * CRATE_Y_LIFT_PER_SCALE;
-            if (pl.scale > 0.05f)
-                addGlb(group, makeGlbShape<Crate>(pl.x, pl.y, pl.z, pl.scale, pl.yaw));
+            if (pl.scale > 0.05f) {
+                auto* cr = makeGlbShape<Crate>(pl.x, pl.y, pl.z, pl.scale, pl.yaw);
+                cr->mesh().setApplyWood(true);
+                addGlb(group, cr);
+            }
         }
     }
 
@@ -211,16 +217,19 @@ std::shared_ptr<SceneNode> buildMapObjectsNode(MapLightRegistry& lights)
         }
     }
 
-    if (const auto it = data.find("bridge"); it != data.end()) {
-        const auto& pts = it->second;
-        for (size_t i = 0; i + 3 < pts.size(); i += 4) {
-            std::vector<PxPt> quad(pts.begin() + (int)i, pts.begin() + (int)i + 4);
-            auto world = toWorldPts(quad);
-            Placement pl = placementFitFootprint(world, 0.f, BRIDGE_MODEL_XZ);
-            pl.scale *= (FIT_MARGIN_BRIDGE / FIT_MARGIN);
-            if (pl.scale > 0.05f)
-                addGlb(group, makeGlbShape<Bridge>(pl.x, pl.y, pl.z, pl.scale, pl.yaw));
-        }
+    // Bridges hardcoded to span water between specific hole greens.
+    // Bridge 1: hole 11 (-2.759, 11.023) <-> hole 13 (5.086, 15.194) — north end of dam 1
+    // Bridge 2: hole 6 (11.795, 14.483)  <-> hole 5 (17.118,  4.984) — east edge of dam 1 / dam 3
+    {
+        struct BridgeSpec { float x, z, yaw, scale; };
+        static const BridgeSpec specs[] = {
+            { 1.164f,  13.109f,
+              std::atan2( 5.086f - (-2.759f),  15.194f - 11.023f),  1.5f },
+            { 14.457f,  9.734f,
+              std::atan2(17.118f -  11.795f,    4.984f - 14.483f),  1.5f },
+        };
+        for (const auto& s : specs)
+            addGlb(group, makeGlbShape<Bridge>(s.x, 0.f, s.z, s.scale, s.yaw));
     }
 
     if (const auto it = data.find("wave"); it != data.end()) {
@@ -229,7 +238,7 @@ std::shared_ptr<SceneNode> buildMapObjectsNode(MapLightRegistry& lights)
             if (p.idx >= 1 && p.idx <= 4)
                 wavePts.push_back(p);
         if (wavePts.size() == 4) {
-            Placement pl = placementFitFootprint(toWorldPts(wavePts), 0.f, WAVE_MODEL_XZ);
+            Placement pl = placementFitFootprint(toWorldPts(wavePts), WAVE_Y_LIFT, WAVE_MODEL_XZ);
             addGlb(group, makeGlbShape<Wave>(pl.x, pl.y, pl.z, pl.scale, pl.yaw));
         }
     }
@@ -237,7 +246,8 @@ std::shared_ptr<SceneNode> buildMapObjectsNode(MapLightRegistry& lights)
     if (const auto it = data.find("bollard"); it != data.end()) {
         for (const auto& p : it->second) {
             auto w = toWorld(p.x, p.y);
-            auto* b = makeGlbShape<Bollard>(w.first, 0.f, w.second, SCALE_BOLLARD, 0.f);
+            float by = BOLLARD_Y_LIFT * SCALE_BOLLARD;
+            auto* b = makeGlbShape<Bollard>(w.first, by, w.second, SCALE_BOLLARD, 0.f);
             Vec3 lp = static_cast<Bollard&>(b->mesh()).getLightPos();
             MapPointLight lamp;
             lamp.pos = lp;
@@ -256,6 +266,7 @@ std::shared_ptr<SceneNode> buildMapObjectsNode(MapLightRegistry& lights)
     if (const auto it = data.find("gazebo"); it != data.end()) {
         Placement pl = placementFitFootprint(toWorldPts(it->second), 0.f, GAZEBO_MODEL_XZ);
         auto* gz = makeGlbShape<Gazebo>(pl.x, pl.y, pl.z, pl.scale, pl.yaw);
+        gz->mesh().setApplyWood(true);
         Vec3 lp = static_cast<Gazebo&>(gz->mesh()).getLightPos();
         MapPointLight lamp;
         lamp.pos = lp;
