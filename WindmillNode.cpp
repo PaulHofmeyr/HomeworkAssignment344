@@ -7,7 +7,8 @@ WindmillResult buildWindmillNode()
     auto wmNode = std::make_shared<SceneNode>();
 
     // ── Position at hole 18 ───────────────────────────────
-    wmNode->localTransform = makeTranslation3D(-16.337f, 0.0f, -14.542f);
+    wmNode->localTransform = makeTranslation3D(-16.337f, 0.0f, -8.0f)
+                           * makeScale3D(2.0f, 2.0f, 2.0f);
 
     // ── Stone leg pillars (6 around base) ─────────────────
     for(int i = 0; i < 6; ++i){
