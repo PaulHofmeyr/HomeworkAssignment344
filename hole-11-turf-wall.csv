@@ -1,0 +1,129 @@
+object,point_#,x,y
+hole 11 turf wall,1,218,428
+hole 11 turf wall,2,225,422
+hole 11 turf wall,3,230,428
+hole 11 turf wall,4,239,434
+hole 11 turf wall,5,246,437
+hole 11 turf wall,6,257,437
+hole 11 turf wall,7,266,433
+hole 11 turf wall,8,273,427
+hole 11 turf wall,9,279,425
+hole 11 turf wall,10,286,419
+hole 11 turf wall,11,295,416
+hole 11 turf wall,12,304,414
+hole 11 turf wall,13,312,413
+hole 11 turf wall,14,320,411
+hole 11 turf wall,15,330,407
+hole 11 turf wall,16,340,405
+hole 11 turf wall,17,353,405
+hole 11 turf wall,18,360,404
+hole 11 turf wall,19,366,399
+hole 11 turf wall,20,371,390
+hole 11 turf wall,21,371,380
+hole 11 turf wall,22,368,371
+hole 11 turf wall,23,361,359
+hole 11 turf wall,24,364,347
+hole 11 turf wall,25,369,342
+hole 11 turf wall,26,375,334
+hole 11 turf wall,27,380,327
+hole 11 turf wall,28,383,316
+hole 11 turf wall,29,383,308
+hole 11 turf wall,30,380,300
+hole 11 turf wall,31,372,294
+hole 11 turf wall,32,368,288
+hole 11 turf wall,33,349,290
+hole 11 turf wall,34,339,292
+hole 11 turf wall,35,334,297
+hole 11 turf wall,36,332,300
+hole 11 turf wall,37,327,299
+hole 11 turf wall,38,326,294
+hole 11 turf wall,39,331,287
+hole 11 turf wall,40,337,285
+hole 11 turf wall,41,344,281
+hole 11 turf wall,42,357,282
+hole 11 turf wall,43,366,282
+hole 11 turf wall,44,374,284
+hole 11 turf wall,45,378,287
+hole 11 turf wall,46,382,290
+hole 11 turf wall,47,386,293
+hole 11 turf wall,48,390,298
+hole 11 turf wall,49,393,305
+hole 11 turf wall,50,395,312
+hole 11 turf wall,51,395,320
+hole 11 turf wall,52,398,325
+hole 11 turf wall,53,399,331
+hole 11 turf wall,54,397,337
+hole 11 turf wall,55,390,339
+hole 11 turf wall,56,385,342
+hole 11 turf wall,57,379,345
+hole 11 turf wall,58,375,351
+hole 11 turf wall,59,373,356
+hole 11 turf wall,60,374,362
+hole 11 turf wall,61,377,368
+hole 11 turf wall,62,380,372
+hole 11 turf wall,63,381,377
+hole 11 turf wall,64,382,385
+hole 11 turf wall,65,382,391
+hole 11 turf wall,66,379,395
+hole 11 turf wall,67,377,401
+hole 11 turf wall,68,374,406
+hole 11 turf wall,69,368,411
+hole 11 turf wall,70,362,414
+hole 11 turf wall,71,352,414
+hole 11 turf wall,72,344,412
+hole 11 turf wall,73,334,414
+hole 11 turf wall,74,324,418
+hole 11 turf wall,75,318,421
+hole 11 turf wall,76,306,427
+hole 11 turf wall,77,297,432
+hole 11 turf wall,78,288,436
+hole 11 turf wall,79,280,438
+hole 11 turf wall,80,275,441
+hole 11 turf wall,81,269,442
+hole 11 turf wall,82,264,444
+hole 11 turf wall,83,254,445
+hole 11 turf wall,84,245,444
+hole 11 turf wall,85,240,443
+hole 11 turf wall,86,233,439
+hole 11 turf wall,87,229,435
+hole 11 turf wall,88,223,432
+wall 2,1,244,399
+wall 2,2,252,400
+wall 2,3,255,395
+wall 2,4,259,392
+wall 2,5,262,390
+wall 2,6,269,390
+wall 2,7,276,388
+wall 2,8,278,383
+wall 2,9,281,377
+wall 2,10,280,367
+wall 2,11,282,359
+wall 2,12,288,355
+wall 2,13,292,349
+wall 2,14,294,346
+wall 2,15,299,340
+wall 2,16,304,336
+wall 2,17,308,331
+wall 2,18,310,327
+wall 2,19,313,324
+wall 2,20,313,319
+wall 2,21,306,317
+wall 2,22,302,321
+wall 2,23,300,325
+wall 2,24,297,329
+wall 2,25,295,332
+wall 2,26,293,335
+wall 2,27,290,338
+wall 2,28,287,341
+wall 2,29,285,345
+wall 2,30,280,349
+wall 2,31,276,354
+wall 2,32,272,359
+wall 2,33,268,364
+wall 2,34,264,369
+wall 2,35,260,373
+wall 2,36,256,378
+wall 2,37,253,381
+wall 2,38,251,384
+wall 2,39,247,389
+wall 2,40,244,393

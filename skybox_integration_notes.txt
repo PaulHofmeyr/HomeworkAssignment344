@@ -1,0 +1,114 @@
+========================================================================
+CHANGES TO main.cpp
+========================================================================
+
+── 1. Add includes near the top (after the existing #include lines) ────────
+
+    #include "Skybox.h"
+
+── 2. After shader loading (after the cubeDepthShader LoadShaders call),
+      load the skybox shader ─────────────────────────────────────────────
+
+    GLuint skyboxShader = LoadShaders("skyboxVert.glsl", "skyboxFrag.glsl");
+
+── 3. After PostProcess pp; pp.init(...); add: ──────────────────────────────
+
+    Skybox skybox;
+    skybox.init();
+
+── 4. Inside the render loop, INSIDE pp.bindFBO() … pp.unbindFBO(),
+      draw the skybox FIRST (before drawScene / drawRotor): ─────────────────
+
+    // ── Draw skybox first (behind everything) ─────────────────────────────
+    skybox.draw(skyboxShader, view, proj);
+
+    The full order in that block should be:
+        pp.bindFBO();
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(app.sceneShaderID);
+        ... (upload uniforms, view/proj, lighting, shadow maps) ...
+
+        // Draw skybox before scene geometry
+        skybox.draw(skyboxShader, view, proj);
+
+        // Restore scene shader after skybox (skybox.draw changes the active program)
+        glUseProgram(app.sceneShaderID);
+
+        // Draw scene
+        { float id[16]; ... }
+        drawScene(app.wireframe);
+        ...
+        drawRotor(app.wireframe);
+        pp.unbindFBO();
+
+── 5. In the cleanup section before glfwTerminate(), add: ───────────────────
+
+    skybox.cleanup();
+    glDeleteProgram(skyboxShader);
+
+========================================================================
+CHANGES TO makefile
+========================================================================
+
+The Skybox.h header includes stb_image inline (STB_IMAGE_IMPLEMENTATION is
+defined inside Skybox.h).  No extra .cpp is needed.
+
+You DO need to download stb_image.h and place it next to your source files:
+  https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
+
+No changes to SRCS are required — Skybox.h is header-only.
+
+If you later split out a Skybox.cpp (to avoid the STB_IMAGE_IMPLEMENTATION
+macro polluting headers), add Skybox.cpp to SRCS as normal.
+
+Also add the two new shader files to your project directory:
+  skyboxVert.glsl
+  skyboxFrag.glsl
+
+========================================================================
+FULL CONTEXT: where to insert the skybox.draw() call in main.cpp
+========================================================================
+
+Replace this block (around line 195 in the original):
+
+    pp.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glUseProgram(app.sceneShaderID);
+
+    glUniform3f(glGetUniformLocation(app.sceneShaderID, "viewPos"), dx, dy, dz);
+    setMat4(app.sceneShaderID, "viewMatrix",       view);
+    setMat4(app.sceneShaderID, "projectionMatrix", proj);
+
+    // Upload all light uniforms (second call)
+    lighting.upload(app.sceneShaderID, app, dx, dy, dz, dfx, dfy, dfz);
+
+    // ... shadow map texture bindings ...
+
+    // Draw scene
+    { float id[16]; flattenMatrix4(getIdentity4(),id);
+      glUniformMatrix4fv(...,"modelMatrix",...); }
+    drawScene(app.wireframe);
+    ...
+    drawRotor(app.wireframe);
+
+    pp.unbindFBO();
+
+WITH (additions marked +++):
+
+    pp.bindFBO();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
++++ // ── Skybox (drawn first, at infinite distance) ─────────────────────
++++ skybox.draw(skyboxShader, view, proj);
+
+    glUseProgram(app.sceneShaderID);   // restore scene shader
+
+    glUniform3f(glGetUniformLocation(app.sceneShaderID, "viewPos"), dx, dy, dz);
+    setMat4(app.sceneShaderID, "viewMatrix",       view);
+    setMat4(app.sceneShaderID, "projectionMatrix", proj);
+
+    // ... rest unchanged ...
+    drawScene(app.wireframe);
+    drawRotor(app.wireframe);
+
+    pp.unbindFBO();

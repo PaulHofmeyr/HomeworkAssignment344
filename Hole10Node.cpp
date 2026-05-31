@@ -1,0 +1,24 @@
+#include "HoleNodes.h"
+#include "NodeUtils.h"
+#include "Prototype.h"
+#include "CourseObjects.h"
+#include "TurfWall.h"
+
+std::shared_ptr<SceneNode> buildHole10Node(CourseLayout& layout)
+{
+    auto node = std::make_shared<SceneNode>();
+    constexpr int  IDX = 9;
+    constexpr float fx = -9.890f, fz = -1.114f;
+
+    node->addChild(fnNode([&layout](){ layout.drawGreenbed(IDX); }));
+    node->addChild(fnNode([&layout](){ layout.drawGreen   (IDX); }));
+    node->addChild(fnNode([&layout](){ layout.drawFlag    (IDX); }));
+    node->addChild(shapeNode(TurfWall::createHole10()));
+
+    node->addChild(makeFlagpole(fx, fz));
+    node->addChild(makeHoleCup(fx, fz));
+    node->addChild(makeBoulderCluster(fx - 1.2f, fz - 1.0f, 0.9f, 4));
+    node->addChild(makeNativeTree(fx - 2.5f, fz, 0.8f));
+    node->addChild(makeNativeTree(fx - 3.0f, fz + 1.0f));
+    return node;
+}

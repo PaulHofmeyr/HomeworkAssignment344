@@ -1,0 +1,112 @@
+object,point_#,x,y
+hole 3 turf wall,1,642,902
+hole 3 turf wall,2,650,903
+hole 3 turf wall,3,650,917
+hole 3 turf wall,4,651,928
+hole 3 turf wall,5,654,939
+hole 3 turf wall,6,663,942
+hole 3 turf wall,7,682,943
+hole 3 turf wall,8,699,943
+hole 3 turf wall,9,717,943
+hole 3 turf wall,10,733,942
+hole 3 turf wall,11,749,942
+hole 3 turf wall,12,755,942
+hole 3 turf wall,13,762,942
+hole 3 turf wall,14,774,941
+hole 3 turf wall,15,781,941
+hole 3 turf wall,16,787,938
+hole 3 turf wall,17,795,930
+hole 3 turf wall,18,802,924
+hole 3 turf wall,19,808,918
+hole 3 turf wall,20,810,912
+hole 3 turf wall,21,811,898
+hole 3 turf wall,22,811,882
+hole 3 turf wall,23,811,867
+hole 3 turf wall,24,812,857
+hole 3 turf wall,25,812,847
+hole 3 turf wall,26,812,836
+hole 3 turf wall,27,811,828
+hole 3 turf wall,28,811,820
+hole 3 turf wall,29,811,810
+hole 3 turf wall,30,812,800
+hole 3 turf wall,31,810,794
+hole 3 turf wall,32,805,786
+hole 3 turf wall,33,799,782
+hole 3 turf wall,34,790,779
+hole 3 turf wall,35,781,779
+hole 3 turf wall,36,774,785
+hole 3 turf wall,37,768,794
+hole 3 turf wall,38,765,803
+hole 3 turf wall,39,765,811
+hole 3 turf wall,40,768,817
+hole 3 turf wall,41,772,828
+hole 3 turf wall,42,769,836
+hole 3 turf wall,43,764,831
+hole 3 turf wall,44,760,820
+hole 3 turf wall,45,758,809
+hole 3 turf wall,46,758,798
+hole 3 turf wall,47,759,789
+hole 3 turf wall,48,765,779
+hole 3 turf wall,49,771,774
+hole 3 turf wall,50,782,769
+hole 3 turf wall,51,792,770
+hole 3 turf wall,52,800,772
+hole 3 turf wall,53,806,776
+hole 3 turf wall,54,815,783
+hole 3 turf wall,55,819,794
+hole 3 turf wall,56,820,803
+hole 3 turf wall,57,820,815
+hole 3 turf wall,58,819,828
+hole 3 turf wall,59,820,839
+hole 3 turf wall,60,820,853
+hole 3 turf wall,61,820,862
+hole 3 turf wall,62,820,879
+hole 3 turf wall,63,819,893
+hole 3 turf wall,64,819,905
+hole 3 turf wall,65,820,916
+hole 3 turf wall,66,812,925
+hole 3 turf wall,67,807,933
+hole 3 turf wall,68,799,939
+hole 3 turf wall,69,793,946
+hole 3 turf wall,70,785,949
+hole 3 turf wall,71,772,951
+hole 3 turf wall,72,748,952
+hole 3 turf wall,73,730,952
+hole 3 turf wall,74,714,951
+hole 3 turf wall,75,698,952
+hole 3 turf wall,76,682,951
+hole 3 turf wall,77,669,951
+hole 3 turf wall,78,655,949
+hole 3 turf wall,79,650,946
+hole 3 turf wall,80,642,939
+hole 3 turf wall,81,641,933
+hole 3 turf wall,82,641,928
+hole 3 turf wall,83,641,922
+hole 3 turf wall,84,641,912
+wall 2,1,684,903
+wall 2,2,685,912
+wall 2,3,701,913
+wall 2,4,716,912
+wall 2,5,731,913
+wall 2,6,740,914
+wall 2,7,750,913
+wall 2,8,762,912
+wall 2,9,772,906
+wall 2,10,778,894
+wall 2,11,778,881
+wall 2,12,778,867
+wall 2,13,776,853
+wall 2,14,775,847
+wall 2,15,770,856
+wall 2,16,769,862
+wall 2,17,768,868
+wall 2,18,765,876
+wall 2,19,760,882
+wall 2,20,755,888
+wall 2,21,747,894
+wall 2,22,740,899
+wall 2,23,733,903
+wall 2,24,721,905
+wall 2,25,708,904
+wall 2,26,699,904
+wall 2,27,692,903
